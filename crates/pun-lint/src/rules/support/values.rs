@@ -524,11 +524,10 @@ pub(crate) fn native_array(expr: &Expression<'_>, ancestors: &[Node<'_, '_>]) ->
             let Some((params, body)) = function_like(ancestors) else {
                 return false;
             };
-            let param = params.parameters.iter().find(|p| p.variable.name == v.name);
-            let writes = variable_writes(body, v.name);
-            match param {
-                Some(p) => {
-                    matches!(p.hint, Some(Hint::Array(_)))
+            let array_param = |name: &[u8]| {
+                params.parameters.iter().any(|p| {
+                    p.variable.name == name
+                        && matches!(p.hint, Some(Hint::Array(_)))
                         && p.ampersand.is_none()
                         && p.ellipsis.is_none()
                         && !p.default_value.as_ref().is_some_and(|d| {
@@ -537,10 +536,21 @@ pub(crate) fn native_array(expr: &Expression<'_>, ancestors: &[Node<'_, '_>]) ->
                                 Expression::Literal(Literal::Null(_))
                             )
                         })
-                        && writes == Some(0)
+                        && variable_writes(body, name, &|_| false) == Some(0)
+                })
+            };
+            // a local assigned an array: a literal, an unwritten `array` parameter or an array function's result
+            let array_value = |e: &Expression<'_>| match unparenthesize(e) {
+                Expression::Variable(Variable::Direct(other)) => array_param(other.name),
+                Expression::Call(Call::Function(call)) => {
+                    ARRAY_FUNCTIONS.iter().any(|f| named(call, f))
                 }
-                None => writes.is_some_and(|n| n > 0),
+                _ => false,
+            };
+            if params.parameters.iter().any(|p| p.variable.name == v.name) {
+                return array_param(v.name);
             }
+            variable_writes(body, v.name, &array_value).is_some_and(|n| n > 0)
         }
         _ => false,
     }
@@ -585,21 +595,25 @@ fn function_like<'a>(
     })
 }
 
-fn variable_writes(node: Node<'_, '_>, name: &[u8]) -> Option<usize> {
+fn variable_writes(
+    node: Node<'_, '_>,
+    name: &[u8],
+    array_value: &dyn Fn(&Expression<'_>) -> bool,
+) -> Option<usize> {
     let is_var = |e: &Expression<'_>| matches!(unparenthesize(e), Expression::Variable(Variable::Direct(v)) if v.name == name);
     let mut count = 0;
     match node {
         Node::Assignment(a) if is_var(a.lhs) => {
             if !matches!(a.operator, AssignmentOperator::Assign(_))
-                || !matches!(
+                || !(matches!(
                     unparenthesize(a.rhs),
                     Expression::Array(_) | Expression::LegacyArray(_)
-                )
+                ) || array_value(a.rhs))
             {
                 return None;
             }
             count += 1;
-            return variable_writes(Node::Expression(a.rhs), name).map(|n| n + count);
+            return variable_writes(Node::Expression(a.rhs), name, array_value).map(|n| n + count);
         }
         Node::Assignment(a)
             if matches!(
@@ -666,7 +680,7 @@ fn variable_writes(node: Node<'_, '_>, name: &[u8]) -> Option<usize> {
         if failed {
             return;
         }
-        match variable_writes(child, name) {
+        match variable_writes(child, name, array_value) {
             Some(n) => count += n,
             None => failed = true,
         }
