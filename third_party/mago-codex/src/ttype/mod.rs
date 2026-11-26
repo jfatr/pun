@@ -1065,6 +1065,16 @@ fn combine_unequal_union_types_cow(
     preserve_array_shapes: bool,
 ) -> TUnion {
     let flags_1 = type_1.flags;
+    // PHPStan's TypeCombinator::union(): the union is benevolent when every member of the result is a member of a
+    // benevolent input (`'Hi'|(array|string)` is `(array|string)`)
+    let benevolent_flags = UnionFlags::IGNORE_NULLABLE_ISSUES.union(UnionFlags::IGNORE_FALSABLE_ISSUES);
+    let mut benevolent_members: Vec<TAtomic> = Vec::new();
+    if flags_1.contains(benevolent_flags) {
+        benevolent_members.extend(type_1.types.iter().cloned());
+    }
+    if type_2.flags.contains(benevolent_flags) {
+        benevolent_members.extend(type_2.types.iter().cloned());
+    }
     let mut combined_type = if type_1.is_never() && type_2.is_never() {
         let kind = type_1.never_kind().unwrap().max(type_2.never_kind().unwrap());
         type_1.into_owned().with_never_kind(kind)
@@ -1116,6 +1126,13 @@ fn combine_unequal_union_types_cow(
 
     if flags_1.contains(UnionFlags::IGNORE_FALSABLE_ISSUES) || type_2.ignore_falsable_issues() {
         combined_type.set_ignore_falsable_issues(true);
+    }
+
+    if !benevolent_members.is_empty()
+        && combined_type.types.len() > 1
+        && combined_type.types.iter().all(|atomic| benevolent_members.contains(atomic))
+    {
+        combined_type.flags.insert(benevolent_flags);
     }
 
     combined_type

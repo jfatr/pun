@@ -66,6 +66,9 @@
 //! Type/PunVendorMixinsTest.json (a mixin a discovered package's provider registers, its class found through the
 //! package's PSR-4 autoload: root/vendor/pun/vendor-mixins, listed in root/vendor/composer/installed.json) has its
 //! assertion from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13 app with the same package installed.
+//! Type/PunBenevolentTranslationsTest.json (`__()` and `trans_choice()` joined with other values in a ternary, `match`
+//! and `.=`, a union that stays benevolent when every member comes from a benevolent input) has its assertions and
+//! errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

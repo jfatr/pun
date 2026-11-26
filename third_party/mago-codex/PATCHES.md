@@ -1281,6 +1281,16 @@ GenericStaticType keeps `Collection<(int|string), mixed>`.
 member, generic arrays (`array<X>`) and other collection classes are unchanged. Type/PunGenericEloquentUnionsTest.json in
 pun-analyse's larastan-types fixtures checks it against PHPStan 2.3.6 with Larastan 3.15.0.
 
+## Benevolent unions survive a join
+
+`ttype/mod.rs` `combine_unequal_union_types_cow()`: the join of two unions is benevolent (both ignore-nullable and
+ignore-falsable flags) when every member of the result is a member of a benevolent input, as PHPStan's
+TypeCombinator::union() keeps a BenevolentUnionType. Larastan's `__()` is `(array|string)`, so `$b ? 'Hi' : __('x')`,
+a `match` over `__()` and `trans_choice()`, and `.=` onto `__()` stay accepted where `string` is expected; a join that
+adds a member of its own (`1|array|string`, `array|string|null`) is a plain union, as in PHPStan.
+Type/PunBenevolentTranslationsTest.json in pun-analyse's larastan-types fixtures checks it against PHPStan 2.3.7 with
+Larastan 3.15.0.
+
 ## Literal strings combine in linear time
 
 `ttype/combiner.rs` `scrape_type_properties()`: a known literal string merges only with the same literal from

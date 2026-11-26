@@ -1,0 +1,29 @@
+{
+    "test": "Type/PunBenevolentTranslationsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-benevolent-translations.php",
+            "declares": [
+                "punbenevolenttranslations\\labels",
+                "punbenevolenttranslations\\types"
+            ],
+            "asserts": [
+                46,
+                47,
+                48,
+                49
+            ],
+            "errors": [
+                {
+                    "line": 40,
+                    "identifier": "return.type",
+                    "message": "Method PunBenevolentTranslations\\Labels::nullable() should return string but returns array|string|null.",
+                    "tip": null
+                }
+            ]
+        }
+    ]
+}
