@@ -4494,3 +4494,10 @@ pass learns nothing from it; Mago sent the markers to the template bounds and re
 `fn (): Models => new Models([new Apple])` to `Models<int|string, object>` when `Models` inherits its constructor
 (shipfastlabs/pun#124). `crates/pun-analyse/tests/bleeding_edge_inherited_constructors.rs` covers it against PHPStan
 2.3.5 with `bleedingEdge.neon`.
+## Array pointer functions read their array
+
+`invocation/arguments.rs` `is_argument_mutated_by_reference()`: `end()`, `reset()`, `next()` and `prev()` take their
+array by reference only to move its internal pointer. PHPStan's function map marks it `&rw_array_arg`
+(PassedByReference::readsArgument()), so ArgumentsHandler writes nothing back and the array keeps its type; Mago
+widened a `non-empty-list<string>` back to `list<string>` after `end($columns)` (shipfastlabs/pun#126). `crates/pun-analyse/tests/array_pointer_functions.rs`
+covers it against PHPStan 2.3.5.

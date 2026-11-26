@@ -9,6 +9,7 @@ mod array_merge_lists;
 mod array_map_keys;
 mod array_metadata;
 mod array_mutation_states;
+mod array_pointer_functions;
 mod array_rand;
 mod array_slice;
 mod array_sum;
