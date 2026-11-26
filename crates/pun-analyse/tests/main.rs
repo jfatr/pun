@@ -6,6 +6,7 @@ mod argument_reasons;
 mod argument_settings;
 mod array_assignment_certainty;
 mod array_merge_lists;
+mod array_map_keys;
 mod array_metadata;
 mod array_mutation_states;
 mod array_rand;

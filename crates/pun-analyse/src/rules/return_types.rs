@@ -138,7 +138,7 @@ impl ConstantArrayMap {
                     .and_then(TUnion::get_single_array)
                     .is_some_and(|array| match array {
                         TArray::Keyed(keyed) => {
-                            keyed.known_items.is_some() && keyed.parameters.is_none()
+                            keyed.known_items.is_some() != keyed.parameters.is_some()
                         }
                         TArray::List(list) => {
                             list.known_elements.is_some() && list.element_type.is_never()
@@ -174,9 +174,31 @@ impl FunctionReturnTypeProvider for ConstantArrayMap {
         context: &ProviderContext<'_, '_, '_>,
         invocation: &InvocationInfo<'_, '_, '_>,
     ) -> Option<TUnion> {
-        Self::applies(context, invocation)
-            .then(|| ArrayMapProvider.get_return_type(context, invocation))
-            .flatten()
+        if !Self::applies(context, invocation) {
+            return None;
+        }
+        let array = invocation
+            .get_argument(1, &[b"array"])
+            .and_then(|array| context.get_expression_type(array))
+            .and_then(TUnion::get_single_array);
+        // ArrayMapFunctionReturnTypeExtension: one array that is not a shape keeps its keys and its non-emptiness,
+        // its values are the callback's return type
+        if let Some(TArray::Keyed(keyed)) = array
+            && keyed.known_items.is_none()
+            && let Some((key, value)) = keyed.parameters.as_ref()
+        {
+            let callback = invocation.get_argument(0, &[b"callback"])?;
+            let returned = context
+                .get_callback_return_type(callback, std::slice::from_ref(&**value))?
+                .clone();
+            if returned.has_template_types() {
+                return None;
+            }
+            let mapped = TKeyedArray::new_with_parameters(Arc::clone(key), Arc::new(returned))
+                .with_non_empty(keyed.is_non_empty());
+            return Some(TUnion::from_atomic(TAtomic::Array(TArray::Keyed(mapped))));
+        }
+        ArrayMapProvider.get_return_type(context, invocation)
     }
 }
 
