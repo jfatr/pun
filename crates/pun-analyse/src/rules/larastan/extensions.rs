@@ -769,20 +769,50 @@ fn narrow(
                 .unwrap_or_default()
                 .to_ascii_lowercase();
             let checked = match function.as_slice() {
-                b"is_int" | b"is_integer" | b"is_long" => TAtomic::Scalar(TScalar::int()),
-                b"is_string" => TAtomic::Scalar(TScalar::string()),
-                b"is_float" | b"is_double" => TAtomic::Scalar(TScalar::float()),
-                b"is_bool" => TAtomic::Scalar(TScalar::bool()),
-                b"is_null" => TAtomic::Null,
-                b"is_object" => TAtomic::Object(TObject::Any),
+                b"is_int" | b"is_integer" | b"is_long" => vec![TAtomic::Scalar(TScalar::int())],
+                b"is_string" => vec![TAtomic::Scalar(TScalar::string())],
+                b"is_float" | b"is_double" => vec![TAtomic::Scalar(TScalar::float())],
+                b"is_bool" => vec![TAtomic::Scalar(TScalar::bool())],
+                b"is_null" => vec![TAtomic::Null],
+                b"is_object" => vec![TAtomic::Object(TObject::Any)],
+                // IsScalarFunctionTypeSpecifyingExtension's `bool|float|int|string`, IsArrayFunctionTypeSpecifyingExtension's
+                // `array<mixed, mixed>`
+                b"is_scalar" => vec![
+                    TAtomic::Scalar(TScalar::bool()),
+                    TAtomic::Scalar(TScalar::float()),
+                    TAtomic::Scalar(TScalar::int()),
+                    TAtomic::Scalar(TScalar::string()),
+                ],
+                b"is_array" => {
+                    let mixed = Arc::new(TUnion::from_atomic(TAtomic::Mixed(
+                        mago_codex::ttype::atomic::mixed::TMixed::new().with_is_explicit(true),
+                    )));
+                    vec![TAtomic::Array(
+                        mago_codex::ttype::atomic::array::TArray::Keyed(
+                            mago_codex::ttype::atomic::array::keyed::TKeyedArray::new_with_parameters(
+                                mixed.clone(),
+                                mixed,
+                            ),
+                        ),
+                    )]
+                }
                 _ => return ty,
             };
             match call.argument_list.arguments.as_slice() {
                 [argument] if is_var(argument.value()) => {
                     if truthy {
-                        intersect(ty, &checked)
+                        let mut kept = checked
+                            .iter()
+                            .map(|checked| intersect(ty.clone(), checked))
+                            .filter(|t| !t.is_never());
+                        match kept.next() {
+                            Some(first) => kept.fold(first, |acc, t| {
+                                add_union_type(acc, &t, codebase, CombinerOptions::default())
+                            }),
+                            None => mago_codex::ttype::get_never(),
+                        }
                     } else {
-                        remove(ty, &checked)
+                        checked.iter().fold(ty, remove)
                     }
                 }
                 _ => ty,

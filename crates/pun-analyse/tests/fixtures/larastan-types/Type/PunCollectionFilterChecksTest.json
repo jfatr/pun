@@ -1,0 +1,22 @@
+{
+    "test": "Type/PunCollectionFilterChecksTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-collection-filter-checks.php",
+            "declares": [
+                "puncollectionfilterchecks\\calls"
+            ],
+            "asserts": [
+                15,
+                16,
+                17,
+                18,
+                19
+            ],
+            "errors": []
+        }
+    ]
+}
