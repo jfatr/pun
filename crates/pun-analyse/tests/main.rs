@@ -125,6 +125,7 @@ mod mixed_subtraction;
 mod mockery;
 mod named_argument_registration;
 mod named_method_reflections;
+mod narrowed_mixed_generics;
 mod native_array_order;
 mod native_call_continuation;
 mod native_intersections;

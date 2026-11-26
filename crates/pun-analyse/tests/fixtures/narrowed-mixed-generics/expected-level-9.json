@@ -1,0 +1,30 @@
+{
+ "phpstan": "2.3.5",
+ "level": 9,
+ "errors": [
+  {
+   "file": "boxes.php",
+   "line": 20,
+   "identifier": "return.type",
+   "message": "Method NarrowedMixedGenerics\\Boxes::narrowed() should return NarrowedMixedGenerics\\Box<int> but returns NarrowedMixedGenerics\\Box<mixed>."
+  },
+  {
+   "file": "boxes.php",
+   "line": 30,
+   "identifier": "return.type",
+   "message": "Method NarrowedMixedGenerics\\Boxes::notNull() should return NarrowedMixedGenerics\\Box<int> but returns NarrowedMixedGenerics\\Box<mixed>."
+  },
+  {
+   "file": "boxes.php",
+   "line": 39,
+   "identifier": "return.type",
+   "message": "Method NarrowedMixedGenerics\\Boxes::plain() should return NarrowedMixedGenerics\\Box<int> but returns NarrowedMixedGenerics\\Box<mixed>."
+  },
+  {
+   "file": "boxes.php",
+   "line": 45,
+   "identifier": "return.type",
+   "message": "Method NarrowedMixedGenerics\\Boxes::text() should return NarrowedMixedGenerics\\Box<int> but returns NarrowedMixedGenerics\\Box<string>."
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "phpstan": "2.3.5",
+ "level": 6,
+ "errors": [
+  {
+   "file": "boxes.php",
+   "line": 45,
+   "identifier": "return.type",
+   "message": "Method NarrowedMixedGenerics\\Boxes::text() should return NarrowedMixedGenerics\\Box<int> but returns NarrowedMixedGenerics\\Box<string>."
+  }
+ ]
+}

@@ -749,7 +749,8 @@ pub(super) fn valid_variance(a: &Type, b: &Type, declared: &str, strict: bool) -
             };
             if matches!(b, Type::Never(_))
                 || (!strict
-                    && (matches!(**a, Type::Mixed { .. }) || matches!(b, Type::Mixed { .. })))
+                    && (matches!(**a, Type::Mixed { .. } | Type::SubtractedMixed { .. })
+                        || matches!(b, Type::Mixed { .. } | Type::SubtractedMixed { .. })))
             {
                 return Tri::Yes;
             }
@@ -761,7 +762,13 @@ pub(super) fn valid_variance(a: &Type, b: &Type, declared: &str, strict: bool) -
         }
         (_, Type::Projection(..)) => Tri::No,
         (_, Type::Never(_)) => Tri::Yes,
-        (Type::Mixed { .. }, _) | (_, Type::Mixed { .. }) if !strict => Tri::Yes,
+        // A narrowed `mixed~T` is still PHPStan's `MixedType` here.
+        (Type::Mixed { .. } | Type::SubtractedMixed { .. }, _)
+        | (_, Type::Mixed { .. } | Type::SubtractedMixed { .. })
+            if !strict =>
+        {
+            Tri::Yes
+        }
         (Type::Benevolent(_), _) if !strict && !is_super_type_of(a, b).no() => Tri::Yes,
         (_, Type::Benevolent(_)) if !strict && !is_super_type_of(b, a).no() => Tri::Yes,
         _ if declared == "covariant" => is_super_type_of(a, b),
@@ -769,10 +776,10 @@ pub(super) fn valid_variance(a: &Type, b: &Type, declared: &str, strict: bool) -
         (Type::Template(a), Type::Template(b)) if a.name == b.name && a.scope == b.scope => {
             Tri::Yes
         }
-        (Type::Mixed { .. }, _) => Tri::Yes,
+        (Type::Mixed { .. } | Type::SubtractedMixed { .. }, _) => Tri::Yes,
         (Type::Benevolent(_), _) if !is_super_type_of(a, b).no() => Tri::Yes,
         (_, Type::Benevolent(_)) if !is_super_type_of(b, a).no() => Tri::Maybe,
-        (_, Type::Mixed { .. }) => Tri::Maybe,
+        (_, Type::Mixed { .. } | Type::SubtractedMixed { .. }) => Tri::Maybe,
         _ => Tri::from(a == b),
     }
 }
