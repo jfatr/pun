@@ -80,6 +80,9 @@
 //! Type/PunReturnedMacrosTest.json (Route macros whose closure a method returns, registered by a class the package
 //! provider of root/vendor/pun/vendor-route-macros instantiates) has its assertions from PHPStan 2.3.7 with Larastan
 //! 3.15.0 at level 8 in a Laravel 13.44.1 app with the same package installed.
+//! Type/PunContainerBindingsTest.json (`resolve()` and `app()` of a string the framework's providers bind to a closure
+//! returning one `new` instance, such as `db.transactions`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0
+//! at level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

@@ -12,7 +12,15 @@ class PaginationServiceProvider extends ServiceProvider
      * @return void
      */
     public function boot()
-    {}
+    {
+        $this->loadViewsFrom(__DIR__.'/resources/views', 'pagination');
+
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/resources/views' => $this->app->resourcePath('views/vendor/pagination'),
+            ], 'laravel-pagination');
+        }
+    }
 
     /**
      * Register the service provider.
@@ -20,5 +28,7 @@ class PaginationServiceProvider extends ServiceProvider
      * @return void
      */
     public function register()
-    {}
+    {
+        PaginationState::resolveUsing($this->app);
+    }
 }

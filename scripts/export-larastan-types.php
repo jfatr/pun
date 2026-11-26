@@ -224,12 +224,13 @@ foreach (glob($copyRoot.'/vendor/*/*', GLOB_ONLYDIR) as $package) {
 symlink('../../..', $copyRoot.'/vendor/orchestra/testbench-core/laravel/vendor');
 // the vendor classes' and functions' bodies, which Pun never analyses, are cut to `{}` (`{ yield; }` for a generator,
 // `{ func_get_args(); }` for a function that reads its arguments so),
-// except those Pun reads as the booted app: registerCoreContainerAliases(), Facade::defaultAliases() and the macros
-// FoundationServiceProvider registers
+// except those Pun reads as the booted app: registerCoreContainerAliases(), Facade::defaultAliases(), the macros
+// FoundationServiceProvider registers and the string bindings of the framework's service providers
 const READ_BODIES = ['vendor/laravel/framework/src/Illuminate/Foundation/Application.php', 'vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php', 'vendor/laravel/framework/src/Illuminate/Foundation/Providers/FoundationServiceProvider.php'];
 $parser = (new PhpParser\ParserFactory())->createForHostVersion();
 foreach ($vendor ?? file($out.'/vendor.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $path) {
-    if (str_ends_with($path, '.php') && is_file($copyRoot.'/'.$path) && ! in_array($path, READ_BODIES, true)) {
+    $provider = str_starts_with($path, 'vendor/laravel/framework/src/') && str_ends_with($path, 'ServiceProvider.php');
+    if (str_ends_with($path, '.php') && is_file($copyRoot.'/'.$path) && ! in_array($path, READ_BODIES, true) && ! $provider) {
         file_put_contents($copyRoot.'/'.$path, strip_bodies($parser, file_get_contents($copyRoot.'/'.$path)));
     }
 }

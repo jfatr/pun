@@ -16,7 +16,9 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return void
      */
     public function boot()
-    {}
+    {
+        $this->serveFiles();
+    }
 
     /**
      * Register the service provider.
@@ -24,7 +26,10 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return void
      */
     public function register()
-    {}
+    {
+        $this->registerNativeFilesystem();
+        $this->registerFlysystem();
+    }
 
     /**
      * Register the native filesystem implementation.
@@ -32,7 +37,11 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return void
      */
     protected function registerNativeFilesystem()
-    {}
+    {
+        $this->app->singleton('files', function () {
+            return new Filesystem;
+        });
+    }
 
     /**
      * Register the driver based filesystem.
@@ -40,7 +49,17 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return void
      */
     protected function registerFlysystem()
-    {}
+    {
+        $this->registerManager();
+
+        $this->app->singleton('filesystem.disk', function ($app) {
+            return $app['filesystem']->disk($this->getDefaultDriver());
+        });
+
+        $this->app->singleton('filesystem.cloud', function ($app) {
+            return $app['filesystem']->disk($this->getCloudDriver());
+        });
+    }
 
     /**
      * Register the filesystem manager.
@@ -48,7 +67,11 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return void
      */
     protected function registerManager()
-    {}
+    {
+        $this->app->singleton('filesystem', function ($app) {
+            return new FilesystemManager($app);
+        });
+    }
 
     /**
      * Register protected file serving.
@@ -58,7 +81,51 @@ class FilesystemServiceProvider extends ServiceProvider
      * @throws \InvalidArgumentException
      */
     protected function serveFiles()
-    {}
+    {
+        if ($this->app instanceof CachesRoutes && $this->app->routesAreCached()) {
+            return;
+        }
+
+        $served = [];
+
+        foreach ($this->app['config']['filesystems.disks'] ?? [] as $disk => $config) {
+            if (! $this->shouldServeFiles($config)) {
+                continue;
+            }
+
+            $this->app->booted(function ($app) use ($disk, $config, &$served) {
+                $uri = isset($config['url'])
+                    ? rtrim(parse_url($config['url'])['path'], '/')
+                    : '/storage';
+
+                if (isset($served[$uri])) {
+                    throw new InvalidArgumentException(
+                        "The [{$disk}] disk conflicts with the [{$served[$uri]}] disk at [{$uri}]. Each served disk must have a unique URL."
+                    );
+                }
+
+                $served[$uri] = $disk;
+
+                $isProduction = $app->isProduction();
+
+                Route::get($uri.'/{path}', function (Request $request, string $path) use ($disk, $config, $isProduction) {
+                    return (new ServeFile(
+                        $disk,
+                        $config,
+                        $isProduction
+                    ))($request, $path);
+                })->where('path', '.*')->name('storage.'.$disk);
+
+                Route::put($uri.'/{path}', function (Request $request, string $path) use ($disk, $config, $isProduction) {
+                    return (new ReceiveFile(
+                        $disk,
+                        $config,
+                        $isProduction
+                    ))($request, $path);
+                })->where('path', '.*')->name('storage.'.$disk.'.upload');
+            });
+        }
+    }
 
     /**
      * Determine if the disk is serveable.
@@ -67,7 +134,9 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return bool
      */
     protected function shouldServeFiles(array $config)
-    {}
+    {
+        return $config['driver'] === 'local' && ($config['serve'] ?? false);
+    }
 
     /**
      * Get the default file driver.
@@ -75,7 +144,9 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return string
      */
     protected function getDefaultDriver()
-    {}
+    {
+        return $this->app['config']['filesystems.default'];
+    }
 
     /**
      * Get the default cloud based file driver.
@@ -83,5 +154,7 @@ class FilesystemServiceProvider extends ServiceProvider
      * @return string
      */
     protected function getCloudDriver()
-    {}
+    {
+        return $this->app['config']['filesystems.cloud'];
+    }
 }

@@ -90,6 +90,13 @@ impl App {
                     .insert(class.to_ascii_lowercase(), concrete.clone());
             }
         }
+        // Larastan asks the booted container, which also holds the framework providers' string bindings
+        // (`$this->app->singleton('db.transactions', fn () => new DatabaseTransactionsManager)`).
+        for (key, concrete) in framework_bindings(root) {
+            app.container
+                .entry(key.to_ascii_lowercase())
+                .or_insert(concrete);
+        }
         app
     }
 
@@ -251,6 +258,76 @@ fn core_aliases(path: &Path) -> Vec<(String, Vec<String>)> {
                     self.found
                         .push((String::from_utf8_lossy(key).into_owned(), classes));
                 }
+            }
+        }
+    }
+    let mut find = Find {
+        names: &names,
+        found: Vec::new(),
+    };
+    find.walk_program(program, &mut ());
+    find.found
+}
+
+/// The string bindings of the framework's service providers, each with the class its closure instantiates.
+pub(crate) fn framework_bindings(root: &Path) -> Vec<(String, String)> {
+    let framework = root.join("vendor/laravel/framework/src/Illuminate");
+    crate::php_files(&framework, &["php".to_string()])
+        .iter()
+        .filter(|path| path.to_string_lossy().ends_with("ServiceProvider.php"))
+        .flat_map(|path| provider_bindings(path))
+        .collect()
+}
+
+/// A provider's `bind()`, `singleton()` and `scoped()` calls whose abstract is a string and whose closure returns one
+/// `new` instance.
+fn provider_bindings(path: &Path) -> Vec<(String, String)> {
+    let Some(file) = read(path, FileType::Vendored).ok().flatten() else {
+        return Vec::new();
+    };
+    let arena = LocalArena::new();
+    let (program, names) = parse(&arena, &file);
+    struct Find<'n, 'arena> {
+        names: &'n ResolvedNames<'arena>,
+        found: Vec<(String, String)>,
+    }
+    impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for Find<'_, 'arena> {
+        fn walk_in_method_call(&mut self, call: &'ast MethodCall<'arena>, (): &mut ()) {
+            let ClassLikeMemberSelector::Identifier(method) = &call.method else {
+                return;
+            };
+            if ![&b"bind"[..], b"singleton", b"scoped"]
+                .iter()
+                .any(|m| method.value.eq_ignore_ascii_case(m))
+            {
+                return;
+            }
+            let [abstract_, concrete] = call.argument_list.arguments.as_slice() else {
+                return;
+            };
+            let Expression::Literal(Literal::String(LiteralString {
+                value: Some(key), ..
+            })) = abstract_.value()
+            else {
+                return;
+            };
+            let returned = match concrete.value() {
+                Expression::Closure(c) => match c.body.statements.as_slice().last() {
+                    Some(Statement::Return(Return { value: Some(e), .. })) => *e,
+                    _ => return,
+                },
+                Expression::ArrowFunction(f) => f.expression,
+                _ => return,
+            };
+            if let Expression::Instantiation(Instantiation {
+                class: Expression::Identifier(id),
+                ..
+            }) = returned
+            {
+                self.found.push((
+                    String::from_utf8_lossy(key).into_owned(),
+                    String::from_utf8_lossy(self.names.get(&id.span())).into_owned(),
+                ));
             }
         }
     }

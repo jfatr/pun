@@ -588,6 +588,19 @@ pub(crate) fn build(
     let migrations: Vec<PathBuf> = (project.larastan.iter())
         .flat_map(|l| crate::laravel::migration_files(&l.migration_directories))
         .collect();
+    // Larastan resolves a string the framework's providers bind through the booted container, which loads the
+    // bound class: Pun reads the class even when no analysed name reaches it.
+    let bound: HashSet<String> = (project.larastan.iter())
+        .map(|l| crate::larastan::app::framework_bindings(&l.root))
+        .next()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|(_, class)| class.to_ascii_lowercase())
+        .collect();
+    let bound: Vec<PathBuf> = (project.autoloaded.iter())
+        .filter(|a| bound.contains(&String::from_utf8_lossy(&a.class).to_ascii_lowercase()))
+        .map(|a| a.path.clone())
+        .collect();
     let mut seen = HashSet::new();
     let mut files: Vec<_> = project
         .analysed
@@ -596,6 +609,7 @@ pub(crate) fn build(
         .chain(project.scanned.iter().map(|p| (p, FileType::Vendored)))
         .chain(project.stubs.iter().map(|p| (p, FileType::Patch)))
         .chain(migrations.iter().map(|p| (p, FileType::Vendored)))
+        .chain(bound.iter().map(|p| (p, FileType::Vendored)))
         .filter(|(p, _)| seen.insert(*p))
         .collect();
     let eager = files.len();

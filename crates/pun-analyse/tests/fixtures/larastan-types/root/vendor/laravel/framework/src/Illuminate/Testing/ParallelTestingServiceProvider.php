@@ -18,7 +18,13 @@ class ParallelTestingServiceProvider extends ServiceProvider implements Deferrab
      * @return void
      */
     public function boot()
-    {}
+    {
+        if ($this->app->runningInConsole()) {
+            $this->bootTestCache();
+            $this->bootTestDatabase();
+            $this->bootTestViews();
+        }
+    }
 
     /**
      * Register the service provider.
@@ -26,5 +32,11 @@ class ParallelTestingServiceProvider extends ServiceProvider implements Deferrab
      * @return void
      */
     public function register()
-    {}
+    {
+        if ($this->app->runningInConsole()) {
+            $this->app->singleton(ParallelTesting::class, function () {
+                return new ParallelTesting($this->app);
+            });
+        }
+    }
 }

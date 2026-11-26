@@ -14,7 +14,14 @@ class PipelineServiceProvider extends ServiceProvider implements DeferrableProvi
      * @return void
      */
     public function register()
-    {}
+    {
+        $this->app->singleton(
+            PipelineHubContract::class,
+            Hub::class
+        );
+
+        $this->app->bind('pipeline', fn ($app) => new Pipeline($app));
+    }
 
     /**
      * Get the services provided by the provider.
@@ -22,5 +29,10 @@ class PipelineServiceProvider extends ServiceProvider implements DeferrableProvi
      * @return array
      */
     public function provides()
-    {}
+    {
+        return [
+            PipelineHubContract::class,
+            'pipeline',
+        ];
+    }
 }

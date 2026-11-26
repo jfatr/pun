@@ -13,5 +13,15 @@ class EventServiceProvider extends ServiceProvider
      * @return void
      */
     public function register()
-    {}
+    {
+        $this->app->singleton('events', function ($app) {
+            return (new Dispatcher($app))->setQueueResolver(function () {
+                return app(QueueFactoryContract::class);
+            })->setTransactionManagerResolver(function () {
+                return app()->bound('db.transactions')
+                    ? app('db.transactions')
+                    : null;
+            });
+        });
+    }
 }

@@ -1,0 +1,23 @@
+{
+    "test": "Type/PunContainerBindingsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-container-bindings.php",
+            "declares": [
+                "puncontainerbindings\\calls"
+            ],
+            "asserts": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+            ],
+            "errors": []
+        }
+    ]
+}
