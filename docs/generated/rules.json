@@ -17560,14 +17560,8 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [
-        "rector"
-      ],
-      "upstream": [
-        "Rector\\Renaming\\Rector\\String_\\RenameStringRector",
-        "RenameString",
-        "RenameStringRector"
-      ],
+      "tools": [],
+      "upstream": [],
       "ported": true
     },
     {
@@ -17578,14 +17572,8 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [
-        "rector"
-      ],
-      "upstream": [
-        "AttributeKeyToClassConstFetch",
-        "AttributeKeyToClassConstFetchRector",
-        "Rector\\Transform\\Rector\\Attribute\\AttributeKeyToClassConstFetchRector"
-      ],
+      "tools": [],
+      "upstream": [],
       "ported": true
     },
     {
@@ -17631,19 +17619,11 @@
       "command": "lint",
       "group": "refactor",
       "summary": "Changes use of function calls to use constants",
-      "enabled": [
-        "rector/coding-style"
-      ],
+      "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [
-        "rector"
-      ],
-      "upstream": [
-        "FuncCallToConstFetch",
-        "FuncCallToConstFetchRector",
-        "Rector\\Transform\\Rector\\FuncCall\\FuncCallToConstFetchRector"
-      ],
+      "tools": [],
+      "upstream": [],
       "ported": true
     },
     {
@@ -17765,14 +17745,8 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [
-        "rector"
-      ],
-      "upstream": [
-        "Rector\\Transform\\Rector\\StaticCall\\StaticCallToNewRector",
-        "StaticCallToNew",
-        "StaticCallToNewRector"
-      ],
+      "tools": [],
+      "upstream": [],
       "ported": true
     },
     {
@@ -17783,14 +17757,8 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [
-        "rector"
-      ],
-      "upstream": [
-        "Rector\\Transform\\Rector\\ClassMethod\\WrapReturnRector",
-        "WrapReturn",
-        "WrapReturnRector"
-      ],
+      "tools": [],
+      "upstream": [],
       "ported": true
     },
     {
@@ -19995,19 +19963,12 @@
       "group": "style",
       "summary": "Add empty new line after different-type statements to improve code readability",
       "enabled": [
-        "lint-strict",
-        "rector/coding-style"
+        "lint-strict"
       ],
       "fix": "safe",
       "ecosystem": "core",
-      "tools": [
-        "rector"
-      ],
-      "upstream": [
-        "NewlineAfterStatement",
-        "NewlineAfterStatementRector",
-        "Rector\\CodingStyle\\Rector\\Stmt\\NewlineAfterStatementRector"
-      ],
+      "tools": [],
+      "upstream": [],
       "ported": true
     },
     {

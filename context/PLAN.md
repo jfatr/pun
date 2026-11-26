@@ -18,7 +18,7 @@ The latest release is v0.3.2.
 - **Priorities, in order:** (1) release tags reach Packagist (§3 Step 5); (2) finish analyse level 0 and levels 1-10;
   (3) the 17 new lint rules; (4) `pun check` in one pass; (5) perf rounds.
 - **Waiting on Pushpak:** the `needs Pushpak` rows in §3 (audit 26, the Packagist hook, `[phpstan-parameters]`,
-  Laravel attributes batch 8, and the others marked so).
+  Laravel attributes batch 8, the six rules Rector 2.9.2 deprecates, and the others marked so).
 
 ## 1. This folder
 
@@ -473,6 +473,7 @@ Left for 1.0: the rule docs content (below), name checks, signing and publishing
 
 | Work | Status |
 | --- | --- |
+| Rector 2.9.2 deprecates six rules Pun ports (their refactor() throws): `NewlineAfterStatementRector` (`lint/style/require-statement-padding`, lint-strict preset; also out of Rector's coding-style set), `FuncCallToConstFetchRector` (`lint/refactor/replace-function-with-constant`, out of coding-style too), `RenameStringRector`, `StaticCallToNewRector`, `WrapReturnRector` and `AttributeKeyToClassConstFetchRector` (`lint/refactor/rename-string`, `replace-static-with-new`, `wrap-return`, `replace-attribute-value-with-constant`). §2 "One-to-one with upstream" says a rule upstream deprecates is not supported. Kept for now as `pun_only` rules, with the Rector entries `unsupported`. The other option: delete the six rules (a pun.toml naming one becomes a config error) | needs Pushpak |
 | tests: crates/pun-phpstan/tests/php.rs `php_helpers` fails on macOS on two error offsets (`/a)/` gives 2, PHP 1; `/(?<1a>x)/` gives 4, PHP 3); the linked pcre2 likely differs from PHP's PCRE2 | todo |
 | CI: CLI polish item 7 (`script` check in CI, skip message in tests/migrate.rs) | todo (stopped by Pushpak) |
 | harness: lint and analyse modes (plan/foundations.md §2 Build 2-3; pun-harness has only `format`) | todo |
