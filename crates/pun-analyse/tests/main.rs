@@ -46,6 +46,7 @@ mod clone_inference;
 mod closure_capture_writes;
 mod closure_freshness;
 mod closure_from_callable;
+mod closure_union_parameters;
 mod coalesce_assignment_target_scopes;
 mod coalesce_inputs;
 mod coalesce_offset_values;
