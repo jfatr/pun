@@ -120,6 +120,7 @@ mod method_specification_edges;
 mod mixed_addition;
 mod mixed_case_alias;
 mod mixed_subtraction;
+mod mockery;
 mod named_argument_registration;
 mod named_method_reflections;
 mod native_array_order;

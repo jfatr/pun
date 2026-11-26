@@ -23,6 +23,7 @@ pub use codebase::CouldNotReadFile;
 pub use extension::AnalyseExtension;
 pub use laravel::Laravel;
 pub use mago::{Dumped, MagoIssue, MagoRun, run_mago};
+pub use mockery::Mockery;
 pub use project::{
     ExceptionChecks, Exceptions, MethodRules, Project, ProjectOptions, Reported, StrictRules,
     TooWide,

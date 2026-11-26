@@ -4411,3 +4411,13 @@ interface intersection now go through mago-codex's `intersect_union_types()` whe
 `$a instanceof Document && $a instanceof StorableFile` follows `$a instanceof RemoteDocument`). mago-codex's PATCHES.md
 ("Objects inside a subtracted object's class") holds the type operation and its PHPStan source.
 `crates/pun-analyse/tests/fixtures/object-intersections/subtraction.php` covers it.
+
+## PHPDoc union resolver for inline `@var`
+
+`settings.rs` adds `Settings::phpdoc_union_resolver` (`Option<PhpDocUnionResolver>`, a function pointer compared by
+address; `None` by default). `utils/docblock.rs`, where an inline `@var` tag's type is built: when the tag's PHPDoc type
+is a union of exactly two members that are not unions themselves, the resolver gets the built type before population
+and may return the type to use instead. Pun's mockery extension sets it to phpstan-mockery 2.0.0's
+TypeNodeResolverExtension, so `/** @var MockInterface|Foo $m */` is `MockInterface&Foo` as in PHPStan; property,
+parameter and return PHPDoc types are rewritten in the codebase instead. `crates/pun-analyse/tests/mockery.rs` (Probe.php
+line 93) covers it against PHPStan 2.3.5 with the extension.

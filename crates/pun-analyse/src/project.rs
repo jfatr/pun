@@ -83,6 +83,7 @@ pub struct Project {
     pub relative_path: RelativePath,
     pub larastan: Option<crate::Larastan>,
     pub carbon: Option<crate::Carbon>,
+    pub mockery: Option<crate::Mockery>,
     pub type_aliases: Vec<(String, String)>,
     pub stubs: Vec<PathBuf>,
     pub reported: Option<Reported>,
@@ -589,6 +590,7 @@ impl Project {
             relative_path: RelativePath::of(&paths),
             larastan: crate::Larastan::from_params(root, params),
             carbon: crate::Carbon::from_params(root, params),
+            mockery: crate::Mockery::from_params(params),
             type_aliases: params
                 .get_str("typeAliases")
                 .and_then(Value::as_array)
@@ -610,12 +612,16 @@ impl Project {
             .flat_map(|e| e.stub_files(root))
             .collect();
         project.stubs.extend(stubs);
+        if project.mockery.is_some() {
+            project.scanned.push(crate::Mockery::scan_files(root));
+        }
         project
     }
 
     pub(crate) fn extensions(&self) -> impl Iterator<Item = &dyn AnalyseExtension> + Clone {
         (self.larastan.iter().map(|l| l as &dyn AnalyseExtension))
             .chain(self.carbon.iter().map(|c| c as &dyn AnalyseExtension))
+            .chain(self.mockery.iter().map(|m| m as &dyn AnalyseExtension))
     }
 
     pub fn new(analysed: Vec<PathBuf>, scanned: Vec<PathBuf>) -> Project {
@@ -695,6 +701,7 @@ impl Project {
             too_wide: TooWide::default(),
             larastan: None,
             carbon: None,
+            mockery: None,
             type_aliases: Vec::new(),
             stubs: Vec::new(),
             reported: None,

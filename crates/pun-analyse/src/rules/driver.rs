@@ -93,6 +93,7 @@ pub(crate) struct Checks {
     pub(super) level: u8,
     relative_path: RelativePath,
     larastan: Option<super::Larastan>,
+    mockery: Option<crate::Mockery>,
     internal: Option<super::internal::Names>,
     pub(super) type_aliases: Vec<(String, String)>,
     reported: Option<crate::project::Reported>,
@@ -162,9 +163,15 @@ impl Checks {
     }
 
     fn extensions(&self) -> impl Iterator<Item = &dyn crate::AnalyseExtension> {
-        self.larastan
+        (self
+            .larastan
             .iter()
-            .map(|l| l as &dyn crate::AnalyseExtension)
+            .map(|l| l as &dyn crate::AnalyseExtension))
+        .chain(
+            self.mockery
+                .iter()
+                .map(|m| m as &dyn crate::AnalyseExtension),
+        )
     }
 }
 
@@ -393,6 +400,7 @@ impl Checks {
             php_version: project.php_version.id(),
             relative_path: project.relative_path.clone(),
             larastan,
+            mockery: project.mockery.clone(),
             internal: (internal_members
                 || project
                     .options

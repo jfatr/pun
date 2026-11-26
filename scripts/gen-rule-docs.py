@@ -515,7 +515,7 @@ Layout-only Rector rules map to format rules. The migration reports any that `[f
 | Changed rule parameters | Kebab-case options on each running rule that reads the parameter |
 | strict-rules or deprecation-rules includes | The matching Pun checks, when their parameter enables them |
 | nesbot/carbon's `extension.neon` | Built in: `carbon = "on"` in `[extensions]` when composer.lock locks `nesbot/carbon` |
-| phpstan-mockery's `extension.neon` | Built in: `mockery = "on"` in `[extensions]` |
+| phpstan-mockery's `extension.neon` | Built in: `mockery = "on"` in `[extensions]`. `mockery.convertUnionToIntersectionType: true` needs no line, as Pun always converts; `false` is reported as unsupported |
 | spaze/phpstan-disallowed-calls' or tomasvotruba/type-coverage's `extension.neon` | Built in: `disallowed-calls = "on"` or `type-coverage = "on"` in `[extensions]`. When phpstan.neon doesn't load the package but composer.lock locks it, the switch is `"off"`, because PHPStan doesn't run its rules |
 | A check that is a lint rule in Pun (`array.duplicateKey`) | The lint rule, on in `[[lint.overrides]]` for `paths` and off for `excludePaths`, unless another config turns it on everywhere. `pun analyse` also reports the check's errors under the lint rule's ID, because the lint rule sees no types and can miss some |
 | `@phpstan-ignore method.notFound` | `@pun-ignore analyse/undefined/method` |

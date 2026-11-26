@@ -62,8 +62,8 @@ impl Analyse {
         u8::try_from(rules.chain(switches).max().unwrap_or(0)).expect("PHPStan levels are 0 to 10")
     }
 
-    /// `stubFiles`, `scanFiles`, `scanDirectories` and `bootstrapFiles`, as absolute paths: a `scan` entry that is a
-    /// directory is a scanned directory, any other a scanned file.
+    /// `stubFiles`, `scanFiles`, `scanDirectories` and `bootstrapFiles`, as absolute paths, and what the extensions'
+    /// neon files add: a `scan` entry that is a directory is a scanned directory, any other a scanned file.
     fn file_parameters(&self, root: &Path, p: &mut Array) {
         let (dirs, files): (Vec<_>, Vec<_>) = (self.scan.iter())
             .map(|s| absolute(root, s))
@@ -81,6 +81,14 @@ impl Analyse {
         ] {
             let paths = paths.into_iter().map(Value::str);
             p.set(Key::from(name), Value::Array(Array::list(paths)));
+        }
+        // phpstan-mockery's extension.neon sets `mockery.convertUnionToIntersectionType: true`
+        if self.ecosystems.contains(&&crate::extensions::MOCKERY) {
+            set(
+                p,
+                "mockery.convertUnionToIntersectionType",
+                Value::Bool(true),
+            );
         }
     }
 

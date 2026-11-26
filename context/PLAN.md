@@ -350,7 +350,7 @@ Done: the gate passed at ea7a84bc2d4c4f4b90ad177d911e6ade3accf253.
 | Work | Status |
 | --- | --- |
 | analyse 3: finish level 0 and the level-2 class rules (counts in §0). Not yet: `debug/dump-scope` and `debug/dump-native-type` | todo |
-| analyse mockery: port phpstan-mockery 2.0.0 into `crates/pun-analyse/src/mockery.rs` (the switch, migrate and oracle are in) | doing |
+| analyse mockery: port phpstan-mockery 2.0.0 into `crates/pun-analyse/src/mockery.rs` (the switch, migrate and oracle are in). Ported; four probe lines still differ (`MockInterface\|mixed`, `\|callable`, `\|array<int>` in Pun's own PHPDoc resolution, and Mockery's `list{}` conditional without the extension): `tests/fixtures/mockery/gaps.txt` | done |
 | analyse disallowed-calls: port spaze/phpstan-disallowed-calls 4.15.1 into `crates/pun-analyse/src/rules/disallowed/` (the switch, migrate and oracle are in) | doing |
 | analyse type-coverage: port tomasvotruba/type-coverage 2.5.1 into `crates/pun-analyse/src/rules/type_coverage.rs` (the switch, migrate and oracle are in) | doing |
 | analyse Mago 1.61 loop memo: re-enable `statement/loop/memo.rs` (the nested-loop speedup), disabled in the 1.61.0 bump because a hit replays only issues, expression types and assignment targets; its key or replay needs Pun's native lane, `variable_state` and observation artifacts (third_party/mago-analyzer/PATCHES.md "Mago 1.61.0 merge adaptations") | todo |

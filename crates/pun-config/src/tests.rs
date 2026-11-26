@@ -882,6 +882,23 @@ fn extensions() {
         (false, vec![])
     );
     assert_eq!(bootstrap(types), (false, vec![]));
+    // `mockery` sets what phpstan-mockery's extension.neon sets; off, the parameter is absent.
+    let mockery = |toml: &str| {
+        let root = dir(&[("pun.toml", toml)]);
+        let parameters = load(&root, &Options::default())
+            .unwrap()
+            .analyse
+            .parameters(&root);
+        (parameters
+            .get_str("mockery")
+            .and_then(pun_phpstan::Value::as_array))
+        .and_then(|m| m.get_str("convertUnionToIntersectionType").cloned())
+    };
+    assert_eq!(
+        mockery("[extensions]\nmockery = \"on\"\n"),
+        Some(pun_phpstan::Value::Bool(true))
+    );
+    assert_eq!(mockery("[extensions]\nmockery = \"off\"\n"), None);
     assert!(e("[extensions]\nlaravel = \"auto\"\n").contains(
         "[extensions] `laravel` = \"auto\" was removed: an extension is on only when pun.toml says so"
     ));

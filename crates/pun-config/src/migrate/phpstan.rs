@@ -230,6 +230,10 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
                     "independent argument-check overrides have no pun.toml option yet"
                 }
                 "checkThisOnly" => "independent receiver eligibility has no pun.toml option yet",
+                // `false`: phpstan-mockery's TypeNodeResolverExtension, which `[extensions] mockery` always runs
+                "mockery.convertUnionToIntersectionType" => {
+                    "Pun's mockery extension always reads `MockInterface|Foo` as `MockInterface&Foo`"
+                }
                 _ if gates.contains(&name) => continue,
                 _ if entry.is_some() && !level => {
                     out.changed.push((name, value));

@@ -318,6 +318,36 @@ fn turns_on_the_extensions_phpstan_loads() {
 }
 
 #[test]
+fn migrates_mockery_union_conversion() {
+    // Pun always converts, so `true` needs no pun.toml line and `false` is the one it can't do.
+    let run = |value: bool| {
+        let neon = format!(
+            "includes:\n    - vendor/phpstan/phpstan-mockery/extension.neon\nparameters:\n    level: 5\n    mockery:\n        convertUnionToIntersectionType: {value}\n"
+        );
+        let d = project(
+            &neon,
+            // phpstan-mockery 2.0.0's extension.neon, its parameters only
+            &[(
+                "vendor/phpstan/phpstan-mockery/extension.neon",
+                "parameters:\n    mockery:\n        convertUnionToIntersectionType: true\nparametersSchema:\n    mockery: structure([\n        convertUnionToIntersectionType: bool()\n    ])\n",
+            )],
+        );
+        from_phpstan(&d, &d.join("phpstan.neon"))
+            .unwrap()
+            .unsupported
+    };
+    assert!(run(true).is_empty(), "{:?}", run(true));
+    assert_eq!(
+        run(false),
+        [(
+            "parameter mockery.convertUnionToIntersectionType".to_string(),
+            "Pun's mockery extension always reads `MockInterface|Foo` as `MockInterface&Foo`"
+                .to_string()
+        )]
+    );
+}
+
+#[test]
 fn migrates_maybe_undefined_variables() {
     use pun_phpstan::Value as V;
     for level in [0, 1] {
