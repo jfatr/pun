@@ -1432,7 +1432,24 @@ pub(crate) fn clear_object_property_narrowings<'ctx, 'arena, A>(
     let mut escaped_roots: Vec<Word> = invalidated_receiver.into_iter().collect();
     let mut container_escapes = false;
     let mut has_object_argument = invalidated_receiver.is_some();
-    for argument in invocation.arguments_source.iter_arguments() {
+    // ArgumentsHandler: a method whose declared return type is `$this` or `static` of its declaring class, and that is
+    // not `@phpstan-impure`, does not invalidate its object arguments (a fluent `$shipment->add($order)`).
+    let keeps_arguments = invocation.target.get_method_context().is_some_and(|method| {
+        let declaring = method.declaring_method_id.map(|id| id.get_class_name());
+        metadata.is_some_and(|metadata| {
+            metadata.declared_purity() != Some(false)
+                && metadata.return_type_metadata.as_ref().is_some_and(|return_type| {
+                    matches!(
+                        return_type.type_union.types.as_ref(),
+                        [TAtomic::Object(mago_codex::ttype::atomic::object::TObject::Named(named))]
+                            if named.is_this
+                                || named.is_static
+                                    && declaring.is_some_and(|class| class.as_bytes().eq_ignore_ascii_case(named.name.as_bytes()))
+                    )
+                })
+        })
+    });
+    for argument in invocation.arguments_source.iter_arguments().filter(|_| !keeps_arguments) {
         let Some(expression) = argument.value() else {
             continue;
         };

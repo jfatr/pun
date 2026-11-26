@@ -4445,3 +4445,10 @@ joins it with an isset-success scope that is never. `statement/loop/assignment_m
 also walks an assignment nested in the right side (`$r[] = $seen[$k] ??= $v`), so the loop analysis sees its target
 assigned. Without both, `$first[$key] ??= $box` in a loop typed the array's values as `mixed`
 (shipfastlabs/pun#113). `crates/pun-analyse/tests/coalesce_offset_values.rs` covers it against PHPStan 2.3.5.
+## Fluent methods keep their arguments' narrowings
+
+`invocation/post_process.rs` `clear_object_property_narrowings()`: a method whose declared return type is `static` or
+`$this` of its declaring class, and that is not `@phpstan-impure`, no longer invalidates the narrowings of its object
+arguments, as ArgumentsHandler checks `ThisType($declaringClass)->isSuperTypeOf($returnType)` and `isPure()->no()`
+before invalidating one. So `$order->box !== null` survives `$shipment->add($order)` (shipfastlabs/pun#109).
+`crates/pun-analyse/tests/fluent_arguments.rs` covers it against PHPStan 2.3.5.
