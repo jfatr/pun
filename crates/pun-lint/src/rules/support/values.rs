@@ -1,8 +1,14 @@
+use mago_phpdoc_syntax::PHPDocParser;
+use mago_phpdoc_syntax::cst::TagValue;
 use mago_syntax::cst::*;
 use pun_tokens::php_compat::intval;
 
+use crate::Context;
+use crate::problem::Span;
+use crate::rules::support::docblocks::doc_comment;
 use crate::rules::support::expressions::named;
 use crate::rules::support::names::class_name;
+use crate::rules::support::statement_edits::previous_token_end;
 use crate::syntax::{node_span, unparenthesize};
 
 pub(crate) fn is_object_of(
@@ -30,9 +36,18 @@ pub(crate) fn known<'a>(
     expr: &'a Expression<'a>,
     at: usize,
 ) -> Option<Known<'a>> {
+    known_assigned(ancestors, expr, at).map(|(known, _)| known)
+}
+
+/// `known`, with the span of the assignment the value comes from.
+fn known_assigned<'a>(
+    ancestors: &[Node<'a, '_>],
+    expr: &'a Expression<'a>,
+    at: usize,
+) -> Option<(Known<'a>, Option<Span>)> {
     let expr = unparenthesize(expr);
     let Expression::Variable(Variable::Direct(var)) = expr else {
-        return Some(Known::Value(expr));
+        return Some((Known::Value(expr), None));
     };
     let name = var.name;
     let mut at = at;
@@ -60,7 +75,7 @@ pub(crate) fn known<'a>(
             return (writes.other.is_none()
                 && writes.assignments.is_empty()
                 && param.ellipsis.is_none())
-            .then_some(param.hint.as_ref().map(Known::Hint))
+            .then_some(param.hint.as_ref().map(|h| (Known::Hint(h), None)))
             .flatten();
         }
         if inherits {
@@ -77,15 +92,16 @@ pub(crate) fn known<'a>(
         }
         let plain = |a: &Assignment<'_>| matches!(a.operator, AssignmentOperator::Assign(_));
         return match writes.assignments.as_slice() {
-            [assignment] if node_span(*assignment).end <= at && plain(assignment) => {
-                Some(Known::Value(unparenthesize(assignment.rhs)))
-            }
+            [assignment] if node_span(*assignment).end <= at && plain(assignment) => Some((
+                Known::Value(unparenthesize(assignment.rhs)),
+                Some(node_span(*assignment)),
+            )),
             assignments if assignments.iter().all(|a| plain(a) && top_level(scope, a)) => {
                 assignments
                     .iter()
                     .rev()
                     .find(|a| node_span(**a).end <= at)
-                    .map(|a| Known::Value(unparenthesize(a.rhs)))
+                    .map(|a| (Known::Value(unparenthesize(a.rhs)), Some(node_span(*a))))
             }
             _ => None,
         };
@@ -437,23 +453,52 @@ const ARRAY_FUNCTIONS: &[&str] = &[
 ];
 
 pub(crate) fn is_native_array(
+    ctx: &Context<'_>,
     ancestors: &[Node<'_, '_>],
     expr: &Expression<'_>,
     at: usize,
 ) -> bool {
-    match known(ancestors, expr, at) {
-        Some(Known::Hint(Hint::Array(_))) => true,
-        Some(Known::Value(value)) => match value {
+    let Some((known, assignment)) = known_assigned(ancestors, expr, at) else {
+        return false;
+    };
+    if let (Expression::Variable(Variable::Direct(var)), Some(assignment)) =
+        (unparenthesize(expr), assignment)
+        && var_tagged(ctx, assignment.start, var.name)
+    {
+        return false;
+    }
+    match known {
+        Known::Hint(Hint::Array(_)) => true,
+        Known::Value(value) => match value {
             Expression::Array(_) | Expression::LegacyArray(_) => true,
             Expression::UnaryPrefix(u) => matches!(u.operator, UnaryPrefixOperator::ArrayCast(..)),
-            Expression::Variable(_) => is_native_array(ancestors, value, node_span(value).start),
+            Expression::Variable(_) => {
+                is_native_array(ctx, ancestors, value, node_span(value).start)
+            }
             Expression::Call(Call::Function(call)) => {
                 ARRAY_FUNCTIONS.iter().any(|f| named(call, f))
             }
             _ => false,
         },
-        _ => false,
+        Known::Hint(_) => false,
     }
+}
+
+/// PHPStan's `processStmtVarAnnotation()`: a `@var` tag on the statement that assigns `$name`, naming it or no
+/// variable, types the variable from the tag and leaves it without an array native type.
+fn var_tagged(ctx: &Context<'_>, start: usize, name: &[u8]) -> bool {
+    let Some(doc) = doc_comment(ctx.source, previous_token_end(ctx, 0, start), start) else {
+        return false;
+    };
+    let arena = mago_allocator::LocalArena::new();
+    let content = &ctx.source.as_bytes()[doc.start..doc.end];
+    let document = PHPDocParser::parse(&arena, mago_database::file::FileId::zero(), content);
+    document.tags().any(|tag| match tag.value {
+        TagValue::Var(value) => {
+            tag.name.value == b"var" && value.variable.is_none_or(|v| v.value == name)
+        }
+        _ => false,
+    })
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -92,7 +92,7 @@ fn parts<'a>(ctx: &Context<'_>, foreach: &'a Foreach<'a>) -> Option<Loop<'a>> {
 /// native type that is an array, such as `$this->items()` of a method declared `: array`. A variable keeps the first
 /// test only: Pun/any_referenced leaves one with a reference alias alone.
 fn array_subject(ctx: &Context<'_>, ancestors: &[Node<'_, '_>], l: &Loop<'_>, at: usize) -> bool {
-    is_native_array(ancestors, l.subject, at)
+    is_native_array(ctx, ancestors, l.subject, at)
         || (!matches!(l.subject, Expression::Variable(_))
             && native_expr_type(ctx, l.subject).is_some_and(|t| t.is_array().yes()))
 }
