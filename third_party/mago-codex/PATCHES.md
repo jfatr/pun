@@ -1373,3 +1373,15 @@ handled in name order, so `AppInvoice` (extending `VendorInvoice`, each using a 
 `$event` and `$halt` were reported `missingType.parameter`. PHPStan's PhpDocInheritanceResolver walks up to the original
 declaration. The copies are now built parents first (shipfastlabs/pun#60).
 `crates/pun-analyse/tests/trait_override_chains.rs` covers it.
+## Mixed exclusions joined with accessory intersections
+
+`ttype/atomic/mixed/subtraction.rs` `union()`: joining `mixed~X` with a generic array or string that carries an
+accessory (`non-empty-array`, `list`, `hasOffsetValue()`, `non-empty-string`, `numeric-string`, `literal-string`,
+a casing or decimal-integer accessory, `numeric`) now gives plain mixed. PHPStan represents such a value as an
+`IntersectionType` whose conjuncts are not subtractable, and
+[`TypeCombinator::intersectWithSubtractedType()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Type/TypeCombinator.php#L1017-L1046)
+returns the mixed without its subtracted type for it. Plain arrays, strings, and constant shapes keep the exclusion.
+This is why `if (is_array($r) && isset($r[0]) && $r[0] instanceof X) { return; }` loses `mixed~Resp` on `$r`:
+the falsey branches join `mixed~Resp` with `non-empty-array&hasOffsetValue(0, mixed~null)` (laravel/ai
+`FakeRerankingGateway::marshalResponse()`). `pun-analyse/tests/fixtures/mixed-subtraction/array-guards.php`
+(namespace `MixedAccessoryJoins`) covers it, with PHPStan 2.3.5 and 2.3.7's identical output in `array-guards.json`.
