@@ -102,6 +102,7 @@ mod generic_defaults;
 mod generic_property_description;
 mod generic_union_unset;
 mod immediate_interfaces;
+mod in_array_haystack;
 mod in_array_narrowing;
 mod include_file;
 mod incoming_isset;

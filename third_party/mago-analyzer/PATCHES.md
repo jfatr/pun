@@ -4516,3 +4516,12 @@ ArrayFindFunctionReturnTypeExtension runs ArrayFilterFunctionReturnTypeHelper wi
 filtered arrays' value type, plus `null` unless the filtered array is non-empty, so `array_find($rows, fn (mixed
 $row): bool => is_array($row))` is `array|null`, not `mixed` (shipfastlabs/pun#130). `crates/pun-analyse/tests/array_find_narrowing.rs` covers it
 against PHPStan 2.3.5.
+
+## A strict in_array() narrows its needle beside a provider
+
+`assertion.rs`: a strict `in_array()` call still gets Mago's needle assertion when an assertion provider also
+narrows its haystack (Pun's port of InArrayFunctionTypeSpecifyingExtension, shipfastlabs/pun#101); Mago skipped the
+special-function assertions whenever a provider returned any. `formula.rs`: `!in_array(...)` whose truthy assertions
+name several variables becomes the negated formula of those assertions, as `!isset($a, $b)` already did, instead of
+no assertions, so `if (!in_array($level, $this->levels, true)) { $level = ...; }` keeps the narrowed `$level` after the
+`if`. PHPStan's `Methods/data/bug-12884.php` level fixture and `crates/pun-analyse/tests/in_array_haystack.rs` cover it.

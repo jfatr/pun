@@ -42,6 +42,7 @@ mod functions;
 mod generics;
 mod hierarchy;
 mod identifiers;
+mod in_array;
 mod include_file;
 mod infer;
 mod ini_get;
