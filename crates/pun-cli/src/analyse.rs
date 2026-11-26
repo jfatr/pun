@@ -76,7 +76,8 @@ pub(crate) struct Finding {
     pub(crate) file: PathBuf,
     /// Relative to the project root (PHPStan's simple relative path, the cwd being the root).
     pub(crate) rel: String,
-    pub(crate) line: u32,
+    /// PHPStan's line: -1 for a collected-data rule's error without a file (type-coverage's measure mode).
+    pub(crate) line: i64,
     pub(crate) identifier: String,
     pub(crate) rule: String,
     pub(crate) message: String,
@@ -106,8 +107,8 @@ impl Finding {
     }
 
     /// PHPStan's `getLine()`: none (0 here) for an `ignoreErrors` entry nothing matched.
-    pub(crate) fn line(&self) -> Option<u32> {
-        (self.line > 0).then_some(self.line)
+    pub(crate) fn line(&self) -> Option<i64> {
+        (self.line != 0).then_some(self.line)
     }
 }
 
@@ -153,6 +154,21 @@ fn syntax_errors(files: &[PathBuf], reported: &[pun_analyse::Error]) -> Vec<pun_
             })
         })
         .collect()
+}
+
+/// The rule of a type-coverage measure-mode error, which has no identifier (AbstractTypeCoverageRule): its message's
+/// subject names it.
+fn measure_rule(identifier: &str, message: &str) -> Option<&'static str> {
+    let subject = message.split(" type coverage is ").next()?;
+    [
+        ("Return", "analyse/type-coverage/return"),
+        ("Param", "analyse/type-coverage/param"),
+        ("Property", "analyse/type-coverage/property"),
+        ("Class constant", "analyse/type-coverage/constant"),
+    ]
+    .into_iter()
+    .find(|(s, _)| identifier.is_empty() && *s == subject && message.ends_with(" possible"))
+    .map(|(_, rule)| rule)
 }
 
 /// The engine's rule for PHPStan's errors about ignores (`ignore.unmatched`, `ignore.count`, ...), which no rule
@@ -214,6 +230,13 @@ fn project(
     let excluded = Exclusions::new(cfg, Command::Analyse)?;
     // PHPStan's PSR-4 and PSR-0 locators ignore excludePaths: an excluded class is still found by its name.
     project.scanned.retain(|p| !excluded.is_excluded(p));
+    // tomasvotruba/type-coverage's rules report nothing when the analysed paths are not the configured ones
+    // (ScopeConfigurationResolver::areFullPathsAnalysed): the counts would cover only part of the project.
+    let full_paths = analysed_paths == from_config
+        || (from_config.is_empty() && analysed_paths == [cfg.root.to_string_lossy()]);
+    if !full_paths {
+        project.type_coverage = None;
+    }
     project.analysed = analysed;
     project.only_files = analysed_paths.iter().all(|p| Path::new(p).is_file());
     project.relative_path = pun_analyse::RelativePath::of(&analysed_paths);
@@ -309,8 +332,9 @@ pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Re
         .collect();
     let mut findings: Vec<Finding> = (errors.into_iter())
         .map(|e| {
-            let rule =
-                rule_of_identifier(&e.identifier).unwrap_or(if e.identifier == "phpstan.parse" {
+            let rule = rule_of_identifier(&e.identifier)
+                .or_else(|| measure_rule(&e.identifier, &e.message))
+                .unwrap_or(if e.identifier == "phpstan.parse" {
                     "parser-error"
                 } else {
                     UNMATCHED_IGNORE
@@ -331,7 +355,7 @@ pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Re
                 source_rel: relative(&cfg.root, &source).replace('\\', "/"),
                 source,
                 file,
-                line: u32::try_from(e.line).unwrap_or(0),
+                line: e.line,
                 identifier: e.identifier,
                 rule: rule.to_string(),
                 message: e.message,
@@ -413,7 +437,9 @@ fn apply_ignores(findings: &mut Vec<Finding>, root: &Path) -> Vec<Problem> {
         let source = String::from_utf8_lossy(&source);
         let mut ignores = Ignores::parse(&source);
         if !ignores.is_empty() {
-            list.retain(|f| !f.ignorable() || !ignores.ignores(&f.rule, f.line as usize));
+            list.retain(|f| {
+                !f.ignorable() || !ignores.ignores(&f.rule, usize::try_from(f.line).unwrap_or(0))
+            });
             let rel = relative(root, &file);
             malformed.extend(ignores.malformed.iter().map(|m| ignore_problem(&rel, m)));
         }
@@ -441,7 +467,7 @@ pub(crate) fn ignore_problem(rel: &str, m: &pun_lint::problem::ignore::Malformed
 
 /// A finding as a problem: at the first non-blank column of its line (PHPStan reports lines only), the tip as help.
 pub(crate) fn problem(f: &Finding, source: &str, index: &LineIndex) -> Problem {
-    let at = (index.line_range(f.line.max(1) as usize)).map_or(0, |r| {
+    let at = (index.line_range(usize::try_from(f.line.max(1)).unwrap_or(1))).map_or(0, |r| {
         r.start + source[r.clone()].len() - source[r].trim_start().len()
     });
     Problem {
@@ -535,7 +561,7 @@ fn with_malformed(analysed: &Analysed, root: &Path) -> Vec<Finding> {
         findings.push(Finding {
             file: source.clone(),
             rel: rel.clone(),
-            line: u32::try_from(line).unwrap_or(0),
+            line: i64::try_from(line).unwrap_or(0),
             identifier: INVALID_IGNORE.into(),
             rule: INVALID_IGNORE.into(),
             message: m.message.clone(),

@@ -1277,3 +1277,46 @@ fn phpstan_alone_beside_a_format_config() {
         "{out}"
     );
 }
+
+#[test]
+fn phpstan_type_coverage_parameters_become_rule_options() {
+    // tomasvotruba/type-coverage 2.5.1's config/extension.neon, without its type-perfect include
+    let extension =
+        include_str!("../../pun-analyse/tests/fixtures/type-coverage/conf/extension.neon");
+    let neon = "includes:\n    - vendor/tomasvotruba/type-coverage/config/extension.neon\nparameters:\n    level: 5\n    paths:\n        - src\n    type_coverage:\n        return_type: 80\n        param_type: 50\n        param: 70.5\n        measure: true\n        declare: 1\n";
+    let d = project(
+        "phpstan-type-coverage",
+        &[
+            ("phpstan.neon", neon),
+            ("src/a.php", "<?php\n"),
+            (
+                "vendor/tomasvotruba/type-coverage/config/extension.neon",
+                extension,
+            ),
+            (
+                "composer.lock",
+                r#"{"packages":[],"packages-dev":[{"name":"tomasvotruba/type-coverage","version":"2.5.1"}]}"#,
+            ),
+        ],
+    );
+    let (out, _, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!(code, Some(0), "{out}");
+    assert!(
+        out.contains("   deprecated in tomasvotruba/type-coverage, with no effect\n     parameter type_coverage.declare\n"),
+        "{out}"
+    );
+    let toml = read(&d, "pun.toml");
+    assert!(
+        toml.contains("[extensions]\ntype-coverage = \"on\"\n"),
+        "{toml}"
+    );
+    // the alias `param` wins over `param_type`
+    for line in [
+        "\"type-coverage/constant\" = { measure = true }\n",
+        "\"type-coverage/param\" = { measure = true, min = 70.5 }\n",
+        "\"type-coverage/property\" = { measure = true }\n",
+        "\"type-coverage/return\" = { measure = true, min = 80 }\n",
+    ] {
+        assert!(toml.contains(line), "{line}{toml}");
+    }
+}

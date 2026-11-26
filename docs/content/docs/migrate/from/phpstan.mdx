@@ -24,6 +24,7 @@ Run `pun migrate --from phpstan`. It follows the config's includes. That covers 
 | nesbot/carbon's `extension.neon` | Built in: `carbon = "on"` in `[extensions]` when composer.lock locks `nesbot/carbon` |
 | phpstan-mockery's `extension.neon` | Built in: `mockery = "on"` in `[extensions]`. `mockery.convertUnionToIntersectionType: true` needs no line, as Pun always converts; `false` is reported as unsupported |
 | spaze/phpstan-disallowed-calls' or tomasvotruba/type-coverage's `extension.neon` | Built in: `disallowed-calls = "on"` or `type-coverage = "on"` in `[extensions]`. When phpstan.neon doesn't load the package but composer.lock locks it, the switch is `"off"`, because PHPStan doesn't run its rules |
+| `type_coverage` parameters | `min` on each `analyse/type-coverage/*` rule, from `return_type` or its alias `return`, which wins when set. `measure` goes on all four. The deprecated `declare` and `print_suggestions` are reported and skipped |
 | A check that is a lint rule in Pun (`array.duplicateKey`) | The lint rule, on in `[[lint.overrides]]` for `paths` and off for `excludePaths`, unless another config turns it on everywhere. `pun analyse` also reports the check's errors under the lint rule's ID, because the lint rule sees no types and can miss some |
 | `@phpstan-ignore method.notFound` | `@pun-ignore analyse/undefined/method` |
 | Baselines | Not copied. Run `pun analyse --generate-baseline`. |

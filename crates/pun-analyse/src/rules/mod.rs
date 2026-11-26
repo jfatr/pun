@@ -126,6 +126,8 @@ pub use larastan::{Larastan, LarastanSwitches};
 pub(crate) use named_argument::is_call_record as is_named_argument_call;
 pub(crate) use named_argument::resolve as renamed_named_arguments;
 pub(crate) use reflection::builtins;
+pub use type_coverage::TypeCoverage;
+pub(crate) use type_coverage::finish as type_coverage_finish;
 pub(crate) use unused_trait::unused_traits;
 
 pub(crate) fn reports(identifier: &str) -> bool {
@@ -278,6 +280,7 @@ pub(crate) struct Checker<'a, 'arena> {
     level: u8,
     switches: driver::Switches,
     larastan: Option<&'a Larastan>,
+    type_coverage: Option<&'a TypeCoverage>,
     larastan_state: larastan::State,
     internal: Option<&'a internal::Names>,
     unreachable: dead_code::UnreachableStatements,

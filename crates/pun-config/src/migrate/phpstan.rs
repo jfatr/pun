@@ -234,6 +234,10 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
                 "mockery.convertUnionToIntersectionType" => {
                     "Pun's mockery extension always reads `MockInterface|Foo` as `MockInterface&Foo`"
                 }
+                // tomasvotruba/type-coverage's Configuration warns about these on STDERR
+                "type_coverage.declare" | "type_coverage.print_suggestions" => {
+                    "deprecated in tomasvotruba/type-coverage, with no effect"
+                }
                 _ if gates.contains(&name) => continue,
                 _ if entry.is_some() && !level => {
                     out.changed.push((name, value));
@@ -246,6 +250,12 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
                 .push((format!("parameter {name}"), why.into()));
         }
     }
+    // type-coverage's alias (`return`) wins over its `_type` key (`return_type`) when it is not null
+    let aliased: Vec<String> = (out.changed.iter())
+        .filter(|(n, v)| n.starts_with("type_coverage.") && *v != Value::Null)
+        .map(|(n, _)| format!("{n}_type"))
+        .collect();
+    out.changed.retain(|(n, _)| !aliased.contains(n));
     // the project's own files: an extension's (in vendor or the phar) come back with the extension
     let own = |names: &[&str]| -> Vec<String> {
         (names.iter())
@@ -879,6 +889,8 @@ fn options(root: &Path, parts: &mut Parts, phpstan: &Phpstan, done: &mut Analyse
 fn toml_value(v: &Value) -> toml::Value {
     match v {
         Value::Bool(b) => toml::Value::Boolean(*b),
+        Value::Int(i) => toml::Value::Integer(*i),
+        Value::Float(f) => toml::Value::Float(*f),
         Value::Array(a) => toml::Value::Array(a.values().map(toml_value).collect()),
         v => toml::Value::String(v.as_str().unwrap_or_default().to_string()),
     }

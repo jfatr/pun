@@ -25771,6 +25771,46 @@
         "unsupported": false
       },
       {
+        "name": "typeCoverage.constantTypeCoverage",
+        "tool": "type-coverage",
+        "url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+        "rules": [
+          "analyse/type-coverage/constant"
+        ],
+        "note": "Merged with ConstantTypeCoverageRule. Options: type_coverage parameters carry as rule options: constant_type and constant as min, measure as measure; measure mode's errors have no identifier.",
+        "unsupported": false
+      },
+      {
+        "name": "typeCoverage.paramTypeCoverage",
+        "tool": "type-coverage",
+        "url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+        "rules": [
+          "analyse/type-coverage/param"
+        ],
+        "note": "Merged with ParamTypeCoverageRule. Options: type_coverage parameters carry as rule options: param_type and param as min, measure as measure; measure mode's errors have no identifier.",
+        "unsupported": false
+      },
+      {
+        "name": "typeCoverage.propertyTypeCoverage",
+        "tool": "type-coverage",
+        "url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+        "rules": [
+          "analyse/type-coverage/property"
+        ],
+        "note": "Merged with PropertyTypeCoverageRule. Options: type_coverage parameters carry as rule options: property_type and property as min, measure as measure; measure mode's errors have no identifier.",
+        "unsupported": false
+      },
+      {
+        "name": "typeCoverage.returnTypeCoverage",
+        "tool": "type-coverage",
+        "url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+        "rules": [
+          "analyse/type-coverage/return"
+        ],
+        "note": "Merged with ReturnTypeCoverageRule. Options: type_coverage parameters carry as rule options: return_type and return as min, measure as measure; measure mode's errors have no identifier.",
+        "unsupported": false
+      },
+      {
         "name": "unaryMinus.nonNumeric",
         "tool": "phpstan-strict-rules",
         "url": "https://phpstan.org/error-identifiers/unaryMinus.nonNumeric",

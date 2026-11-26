@@ -348,6 +348,7 @@ impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for Checker<'_, 'arena> {
         declarations::constant(self, k);
         constants::class_constant(self, k);
         missing_types::class_constant(self, k);
+        type_coverage::constant(self, k);
         phpdoc_types::class_constant(self, k);
         types::class_constant(self, k);
         attributes::check(

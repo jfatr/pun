@@ -1356,6 +1356,10 @@ fn pun_toml_errors() {
             "[analyse.rules] `laravel/no-env-outside-config`: config-directories = \"config\": expected a list of strings",
         ),
         (
+            "[analyse.rules]\n\"type-coverage/return\" = { min = \"high\" }\n",
+            "[analyse.rules] `type-coverage/return`: min = \"high\": expected a number",
+        ),
+        (
             "[format.rules]\n\"strings/single-quote\" = \"yes\"\n",
             "`strings/single-quote` must be true, false or a table of options",
         ),

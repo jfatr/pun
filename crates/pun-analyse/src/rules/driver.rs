@@ -94,6 +94,7 @@ pub(crate) struct Checks {
     relative_path: RelativePath,
     larastan: Option<super::Larastan>,
     mockery: Option<crate::Mockery>,
+    type_coverage: Option<super::TypeCoverage>,
     internal: Option<super::internal::Names>,
     pub(super) type_aliases: Vec<(String, String)>,
     reported: Option<crate::project::Reported>,
@@ -155,6 +156,7 @@ impl Checks {
                 e.identifier.as_deref().is_none_or(|id| {
                     id == "phpstan.parse"
                         || id.starts_with("larastan.collected.")
+                        || id == super::type_coverage::COLLECTED
                         || self.extension_identifiers.contains(id)
                         || reported(id)
                 })
@@ -401,6 +403,7 @@ impl Checks {
             relative_path: project.relative_path.clone(),
             larastan,
             mockery: project.mockery.clone(),
+            type_coverage: project.type_coverage,
             internal: (internal_members
                 || project
                     .options
@@ -712,6 +715,7 @@ fn checker<'a, 'arena>(
         level: project.level,
         switches: project.switches,
         larastan: project.larastan.as_ref(),
+        type_coverage: project.type_coverage.as_ref(),
         larastan_state: Default::default(),
         internal: project.internal.as_ref(),
         unreachable: Default::default(),

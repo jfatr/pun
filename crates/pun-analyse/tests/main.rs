@@ -189,6 +189,7 @@ mod trait_override_chains;
 mod trait_type_aliases;
 mod trait_use_templates;
 mod try_certainty;
+mod type_coverage;
 mod undefined_offset_writes;
 mod unmatched_catch_observation;
 mod unmatched_ignores;

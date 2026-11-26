@@ -27678,6 +27678,106 @@
       "ported": true
     },
     {
+      "id": "analyse/type-coverage/constant",
+      "command": "analyse",
+      "group": "type-coverage",
+      "summary": "Each constant declaration without a native type, while fewer than min percent (default 99) of the project's constant declarations have one; measure = true reports the coverage instead.",
+      "enabled": [
+        "analyse-basic",
+        "analyse-essential",
+        "analyse-recommended",
+        "analyse-strict",
+        "analyse-max"
+      ],
+      "fix": "none",
+      "ecosystem": "core",
+      "tools": [
+        "phpstan",
+        "type-coverage"
+      ],
+      "upstream": [
+        "ConstantTypeCoverageRule",
+        "TomasVotruba\\TypeCoverage\\Rules\\ConstantTypeCoverageRule",
+        "typeCoverage.constantTypeCoverage"
+      ],
+      "ported": true
+    },
+    {
+      "id": "analyse/type-coverage/param",
+      "command": "analyse",
+      "group": "type-coverage",
+      "summary": "Each param declaration without a native type, while fewer than min percent (default 99) of the project's param declarations have one; measure = true reports the coverage instead.",
+      "enabled": [
+        "analyse-basic",
+        "analyse-essential",
+        "analyse-recommended",
+        "analyse-strict",
+        "analyse-max"
+      ],
+      "fix": "none",
+      "ecosystem": "core",
+      "tools": [
+        "phpstan",
+        "type-coverage"
+      ],
+      "upstream": [
+        "ParamTypeCoverageRule",
+        "TomasVotruba\\TypeCoverage\\Rules\\ParamTypeCoverageRule",
+        "typeCoverage.paramTypeCoverage"
+      ],
+      "ported": true
+    },
+    {
+      "id": "analyse/type-coverage/property",
+      "command": "analyse",
+      "group": "type-coverage",
+      "summary": "Each property declaration without a native type, while fewer than min percent (default 99) of the project's property declarations have one; measure = true reports the coverage instead.",
+      "enabled": [
+        "analyse-basic",
+        "analyse-essential",
+        "analyse-recommended",
+        "analyse-strict",
+        "analyse-max"
+      ],
+      "fix": "none",
+      "ecosystem": "core",
+      "tools": [
+        "phpstan",
+        "type-coverage"
+      ],
+      "upstream": [
+        "PropertyTypeCoverageRule",
+        "TomasVotruba\\TypeCoverage\\Rules\\PropertyTypeCoverageRule",
+        "typeCoverage.propertyTypeCoverage"
+      ],
+      "ported": true
+    },
+    {
+      "id": "analyse/type-coverage/return",
+      "command": "analyse",
+      "group": "type-coverage",
+      "summary": "Each return declaration without a native type, while fewer than min percent (default 99) of the project's return declarations have one; measure = true reports the coverage instead.",
+      "enabled": [
+        "analyse-basic",
+        "analyse-essential",
+        "analyse-recommended",
+        "analyse-strict",
+        "analyse-max"
+      ],
+      "fix": "none",
+      "ecosystem": "core",
+      "tools": [
+        "phpstan",
+        "type-coverage"
+      ],
+      "upstream": [
+        "ReturnTypeCoverageRule",
+        "TomasVotruba\\TypeCoverage\\Rules\\ReturnTypeCoverageRule",
+        "typeCoverage.returnTypeCoverage"
+      ],
+      "ported": true
+    },
+    {
       "id": "analyse/types/argument",
       "command": "analyse",
       "group": "types",

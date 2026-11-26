@@ -30,7 +30,7 @@ pub use project::{
 };
 pub use pun_tokens::PhpVersion;
 pub use relative_path::RelativePath;
-pub use rules::{Larastan, LarastanSwitches};
+pub use rules::{Larastan, LarastanSwitches, TypeCoverage};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Error {
@@ -106,6 +106,14 @@ pub fn analyse_project(project: &Project) -> Result<Analysis, CouldNotReadFile> 
             .options
             .contains(crate::ProjectOptions::REPORT_IGNORES_WITHOUT_COMMENTS),
         project.method_rules.renamed_named_arguments,
+    );
+    let errors = rules::type_coverage_finish(
+        project.type_coverage.as_ref(),
+        errors,
+        &sources,
+        project
+            .options
+            .contains(crate::ProjectOptions::REPORT_IGNORES_WITHOUT_COMMENTS),
     );
     std::thread::spawn(move || drop((codebase, sources)));
     let analysed: Vec<String> = project.analysed.iter().map(|p| display(p)).collect();

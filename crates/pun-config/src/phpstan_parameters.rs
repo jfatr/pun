@@ -184,6 +184,7 @@ impl Analyse {
             Key::from("deprecationRulesInstalled"),
             Value::Bool(installed("phpstan-deprecation-rules")),
         );
+        type_coverage_parameters(&mut p, &on);
         for (name, e) in mapping::section(&["phpstan-parameters"]).table() {
             let (Some(option), Some(rules)) = (
                 e.get("option").and_then(toml::Value::as_str),
@@ -199,6 +200,17 @@ impl Analyse {
             }
         }
         p
+    }
+}
+
+/// tomasvotruba/type-coverage's extension.neon defaults, for the kinds whose rule is on (their `min` options
+/// replace them).
+fn type_coverage_parameters(p: &mut Array, on: &HashSet<&str>) {
+    for kind in ["return", "param", "property", "constant"] {
+        if on.contains(format!("analyse/type-coverage/{kind}").as_str()) {
+            set(p, &format!("type_coverage.{kind}_type"), Value::Int(99));
+            set(p, "type_coverage.measure", Value::Bool(false));
+        }
     }
 }
 
@@ -288,7 +300,9 @@ pub(crate) fn check_options(
                 ),
             });
         };
-        let (ok, expected) = if LIST_PARAMETERS.contains(name) {
+        let (ok, expected) = if name.starts_with("type_coverage.") && *k == "min" {
+            (v.is_number(), "a number")
+        } else if LIST_PARAMETERS.contains(name) {
             let strings =
                 (v.as_array()).is_some_and(|a| a.iter().all(serde_json::Value::is_string));
             (strings, "a list of strings")
@@ -306,6 +320,10 @@ fn json(v: &serde_json::Value) -> Value {
     match v {
         serde_json::Value::String(s) => Value::str(s.as_str()),
         serde_json::Value::Array(a) => Value::Array(Array::list(a.iter().map(json))),
+        serde_json::Value::Number(n) => n.as_i64().map_or_else(
+            || Value::Float(n.as_f64().expect("a TOML number")),
+            Value::Int,
+        ),
         v => v.as_bool().map_or(Value::Null, Value::Bool),
     }
 }

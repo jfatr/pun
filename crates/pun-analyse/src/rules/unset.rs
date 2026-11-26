@@ -612,6 +612,7 @@ mod tests {
                 | super::super::Switches::POLLUTE_SCOPE_WITH_BLOCK,
             method_rules: project.method_rules,
             larastan: None,
+            type_coverage: None,
             larastan_state: Default::default(),
             internal: None,
             unreachable: Default::default(),

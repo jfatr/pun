@@ -1254,5 +1254,73 @@
   "package": "phpstan/phpstan-strict-rules",
   "registered_in": "rules.neon conditionalTags",
   "version": "2.0.12"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+  "fqcn": "TomasVotruba\\TypeCoverage\\Rules\\ReturnTypeCoverageRule",
+  "gated_by": null,
+  "identifiers": [
+   "typeCoverage.returnTypeCoverage"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "tomasvotruba/type-coverage",
+  "registered_in": "config/extension.neon rules (fed by the matching phpstan.collector service)",
+  "version": "2.5.1"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+  "fqcn": "TomasVotruba\\TypeCoverage\\Rules\\ParamTypeCoverageRule",
+  "gated_by": null,
+  "identifiers": [
+   "typeCoverage.paramTypeCoverage"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "tomasvotruba/type-coverage",
+  "registered_in": "config/extension.neon rules (fed by the matching phpstan.collector service)",
+  "version": "2.5.1"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+  "fqcn": "TomasVotruba\\TypeCoverage\\Rules\\PropertyTypeCoverageRule",
+  "gated_by": null,
+  "identifiers": [
+   "typeCoverage.propertyTypeCoverage"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "tomasvotruba/type-coverage",
+  "registered_in": "config/extension.neon rules (fed by the matching phpstan.collector service)",
+  "version": "2.5.1"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/TomasVotruba/type-coverage/blob/2.5.1/README.md",
+  "fqcn": "TomasVotruba\\TypeCoverage\\Rules\\ConstantTypeCoverageRule",
+  "gated_by": null,
+  "identifiers": [
+   "typeCoverage.constantTypeCoverage"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "tomasvotruba/type-coverage",
+  "registered_in": "config/extension.neon rules (fed by the matching phpstan.collector service)",
+  "version": "2.5.1"
  }
 ]
