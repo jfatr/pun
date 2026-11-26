@@ -4401,3 +4401,13 @@ method is itself an untyped trait override (`AppInvoice extends VendorInvoice`, 
 `Model::fireModelEvent()`), the walk stopped there and `$event` was `mixed`. PhpDocInheritanceResolver walks on to
 the original declaration, so the walk now continues past a parent whose method a trait declares without a PHPDoc type
 (shipfastlabs/pun#60). `crates/pun-analyse/tests/trait_override_chains.rs` covers it.
+## Instanceof narrowing of subtracted objects
+
+`reconciler/assertion_reconciler.rs` `intersect_atomic_with_atomic()`: two named classes that cannot form an
+interface intersection now go through mago-codex's `intersect_union_types()` when either carries a subtracted type
+(and neither is an object intersection), so
+`File~RemoteDocument` asserted `instanceof Document` becomes `Document~RemoteDocument` instead of never (laravel/ai
+`Mistral/Concerns/MapsAttachments.php` and `OpenRouter/Concerns/MapsAttachments.php`, whose `match (true)` arm
+`$a instanceof Document && $a instanceof StorableFile` follows `$a instanceof RemoteDocument`). mago-codex's PATCHES.md
+("Objects inside a subtracted object's class") holds the type operation and its PHPStan source.
+`crates/pun-analyse/tests/fixtures/object-intersections/subtraction.php` covers it.

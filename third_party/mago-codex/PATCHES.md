@@ -1385,3 +1385,18 @@ This is why `if (is_array($r) && isset($r[0]) && $r[0] instanceof X) { return; }
 the falsey branches join `mixed~Resp` with `non-empty-array&hasOffsetValue(0, mixed~null)` (laravel/ai
 `FakeRerankingGateway::marshalResponse()`). `pun-analyse/tests/fixtures/mixed-subtraction/array-guards.php`
 (namespace `MixedAccessoryJoins`) covers it, with PHPStan 2.3.5 and 2.3.7's identical output in `array-guards.json`.
+## Objects inside a subtracted object's class
+
+`ttype/mod.rs` `intersect_atomic_types()`: intersecting `File~Remote` with a class inside `File` (`Document`) kept
+no result, so `instanceof Document` after `instanceof Remote` narrowed to never. As in TypeCombinator::intersect()'s
+subtractable pass ([`TypeCombinator.php:2170–2200`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Type/TypeCombinator.php#L2170-L2200), through
+`unionWithSubtractedType()`), the narrower object now keeps the exclusion, restricted to its own class
+(`Document~Remote`), and an object inside the single excluded class is never. Both operands are plain objects;
+object intersections keep their existing conjunction path, as PHPStan flattens them into conjuncts first.
+`ttype/comparator/atomic_comparator.rs` `can_be_identical()`: a subtracted object and another named object overlap
+unless the other lies inside the subtraction (for plain objects), following
+[`ObjectType::isSuperTypeOf()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Type/ObjectType.php#L582-L630); the earlier containment check rejected
+`Document` against `File~Remote`, so `$file instanceof Document` was typed `false` and a `match (true)` arm on it
+was skipped as unreachable. mago-analyzer's PATCHES.md ("Instanceof narrowing of subtracted objects") routes the
+reconciler through this intersection. `pun-analyse/tests/fixtures/object-intersections/subtraction.php` (`child`,
+`childAndInterface`, `excluded`, `excludedUnion`, `excludedArm`, `pair`) covers it.
