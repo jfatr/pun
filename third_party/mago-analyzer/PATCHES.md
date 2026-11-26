@@ -4509,3 +4509,10 @@ type is non-nullable, so the next `->` link skips it as PHPStan's chain does; Ma
 nullable (shipfastlabs/pun#129). An
 array whose values may be null still reports. `crates/pun-analyse/tests/nullsafe_offset_chains.rs` covers both against
 PHPStan 2.3.5.
+## array_find() narrows through its callback
+
+`invocation/array_filter.rs`: the array_filter() helper also serves `array_find()`, as PHPStan's
+ArrayFindFunctionReturnTypeExtension runs ArrayFilterFunctionReturnTypeHelper without a mode. The result is the
+filtered arrays' value type, plus `null` unless the filtered array is non-empty, so `array_find($rows, fn (mixed
+$row): bool => is_array($row))` is `array|null`, not `mixed` (shipfastlabs/pun#130). `crates/pun-analyse/tests/array_find_narrowing.rs` covers it
+against PHPStan 2.3.5.
