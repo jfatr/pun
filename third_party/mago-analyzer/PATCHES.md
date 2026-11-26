@@ -4458,3 +4458,11 @@ before invalidating one. So `$order->box !== null` survives `$shipment->add($ord
 no expression ID now targets `$a` when every assertion is a type that `$b` can never be, as TypeSpecifier's
 `createForExpr()` does in a true context. So `str_starts_with($a ?? '', 'sk_')` makes `$a` a `non-falsy-string`
 (shipfastlabs/pun#110). `crates/pun-analyse/tests/str_containing.rs` covers it against PHPStan 2.3.5.
+## Ternary arm remainders of mixed and possibly empty arrays
+
+`expression/assignment/mod.rs` `ternary_assignment_conditions()`: an arm typed `mixed` against a `null` arm now
+leaves `mixed~null` (`TMixed::subtract()`, so the guard does not contain `null`), and a possibly empty array that is not a shape against an empty-array arm leaves the non-empty
+array, as `TypeCombinator::remove()` does in AssignHandler. Before, any `mixed` arm skipped the holders, and the array
+overlapped `[]`. So after `$end = is_array($ends) ? ($ends[$k] ?? null) : null`, `is_array($end)` makes `$ends` an array,
+and after `$verbs = is_array($body) ? array_keys($body) : []`, `count($verbs) !== 1` returning does too
+(shipfastlabs/pun#111). `crates/pun-analyse/tests/ternary_arm_remainders.rs` covers it against PHPStan 2.3.5.
