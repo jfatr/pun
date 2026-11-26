@@ -802,6 +802,36 @@ pub(crate) fn accessor_type(
     }
 }
 
+/// The model a class that neither declares `property` nor is a model names in its `@mixin` tags.
+fn mixin_model(
+    codebase: &CodebaseMetadata,
+    object: &TNamedObject,
+    property: &str,
+) -> Option<TNamedObject> {
+    let class = object.name.as_bytes();
+    let k = codebase.get_class_like(class)?;
+    if codebase.is_instance_of(class, MODEL.as_bytes())
+        || codebase
+            .get_declaring_property(class, property.as_bytes())
+            .is_some()
+        || k.magic_property_ids
+            .contains_key(&Word::new(property.as_bytes()))
+    {
+        return None;
+    }
+    k.mixins
+        .iter()
+        .flat_map(|m| m.type_union.types.iter())
+        .find_map(|m| match m {
+            TAtomic::Object(TObject::Named(m))
+                if codebase.is_instance_of(m.name.as_bytes(), MODEL.as_bytes()) =>
+            {
+                Some(m.clone())
+            }
+            _ => None,
+        })
+}
+
 fn relation_count(codebase: &CodebaseMetadata, class: &[u8], property: &str) -> bool {
     let Some(relation) = property.strip_suffix("_count") else {
         return false;
@@ -1069,6 +1099,10 @@ impl ExpressionHook for ModelAttributes {
                     }
                 }
                 TAtomic::Object(TObject::Named(n)) => {
+                    // MixinPropertiesClassReflectionExtension: a class without the property reads it on its
+                    // `@mixin` model (a JsonResource's `@mixin Post`), relations and counts included
+                    let mixin = mixin_model(context.codebase(), n, &dollar);
+                    let n = mixin.as_ref().unwrap_or(n);
                     let class = n.name.as_bytes();
                     let declared = context
                         .codebase()
