@@ -19,6 +19,7 @@ mod assignment_targets;
 mod attribute_reflection;
 mod attributes;
 mod autoload_required_files;
+mod bleeding_edge_closure_parameters;
 mod branch_declaration_effects;
 mod built_in_parameter_types;
 mod builtin_callable_variants;

@@ -24,6 +24,7 @@ use mago_codex::scanner::inference::infer_initializer_with_codebase;
 use mago_codex::scanner::inference::initializer_class_names;
 use mago_codex::scanner::scan_program;
 use mago_codex::ttype::atomic::TAtomic;
+use mago_codex::ttype::atomic::callable::TCallable;
 use mago_codex::ttype::atomic::scalar::TScalar;
 use mago_codex::ttype::get_empty;
 use mago_codex::ttype::get_error;
@@ -446,6 +447,59 @@ fn build_prelude(php_version: u32) -> (CodebaseMetadata, SymbolReferences) {
         {
             let span = declared.span;
             function.return_type_metadata = Some(TypeMetadata::new(reflected, span));
+        }
+    }
+    use mago_codex::ttype::{TType, TypeRef};
+    // a callable parameter of a built-in function takes PHPStan's signature (`spl_autoload_register()`'s callback
+    // takes a `string`, not Mago's `class-string`), which a closure sent to it is typed from
+    for ((scope, name), function) in &mut metadata.function_likes {
+        if !scope.is_empty() || !function.flags.is_built_in() {
+            continue;
+        }
+        let Some([variant]) = builtins
+            .functions
+            .get(&String::from_utf8_lossy(name.as_bytes()).to_ascii_lowercase())
+            .map(|function| function.variants.as_slice())
+        else {
+            continue;
+        };
+        for (parameter, reflected) in function.parameters.iter_mut().zip(&variant.params) {
+            let Some(declared) = &parameter.type_metadata else {
+                continue;
+            };
+            let signature = |t: &TUnion| {
+                t.types
+                    .iter()
+                    .any(|a| matches!(a, TAtomic::Callable(TCallable::Signature(_))))
+                    && t.types.iter().all(|a| {
+                        matches!(
+                            a,
+                            TAtomic::Callable(TCallable::Signature(_)) | TAtomic::Null
+                        )
+                    })
+            };
+            // Mago's templated signatures (array_map()'s `callable(T): U`) say more than PHPStan's map
+            if !signature(&declared.type_union) || declared.type_union.has_template_types() {
+                continue;
+            }
+            // a class name in PHPStan's signature may be one of its function map's templates
+            if let Some(reflected) =
+                crate::larastan::config::type_from_text(reflected.ty.as_bytes())
+                    .filter(signature)
+                    .filter(|t| {
+                        t.types.iter().any(|a| {
+                            matches!(a, TAtomic::Callable(TCallable::Signature(s)) if !s.get_parameters().is_empty())
+                        })
+                    })
+                    .filter(|t| {
+                        !t.any_child_node(|node| {
+                            matches!(node, TypeRef::Atomic(TAtomic::Object(_)))
+                        })
+                    })
+            {
+                let span = declared.span;
+                parameter.type_metadata = Some(TypeMetadata::new(reflected, span));
+            }
         }
     }
     for ((class, name), constructor) in &mut metadata.function_likes {

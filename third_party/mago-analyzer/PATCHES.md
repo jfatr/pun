@@ -4475,3 +4475,13 @@ ArrayMapFunctionReturnTypeExtension does for every array, so an omitted paramete
 callbacks keep the declared signature. Pun's `ConstantArrayMap` (`crates/pun-analyse/src/rules/return_types.rs`) runs the
 provider for such callbacks as it does for constant arrays. `crates/pun-analyse/tests/first_class_template_defaults.rs` covers a list and a
 keyed array against PHPStan 2.3.5.
+## Closure parameters inferred from their call sites (bleeding edge)
+
+`template_arguments.rs` `Solver::resolve_observation()`: a closure parameter's marker now resolves through
+`resolve_closure_signature_observation()`, a port of PHPStan's `resolveClosureSignatureObservation()`. The parameter
+is contravariant: what the closure is invoked with and the parameter types of the callables it is sent to are joined,
+and the result applies only when the declared type accepts it (else the declared type). `closure_signature_markers()`
+takes the parameter defaults, which `expression/closure.rs` and `expression/arrow_function.rs` pass, and sends an
+optional parameter's default as a contravariant observation, as `collectSites()` does; an argument read from a
+possibly-missing offset no longer leaves the parameter possibly undefined (shipfastlabs/pun#123).
+`crates/pun-analyse/tests/bleeding_edge_closure_parameters.rs` covers it against PHPStan 2.3.5 with `bleedingEdge.neon`.
