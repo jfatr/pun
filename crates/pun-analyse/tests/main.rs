@@ -186,6 +186,7 @@ mod shebang;
 mod signatures;
 mod single_call_arguments;
 mod source_aliases;
+mod sprintf_literal_strings;
 mod statements;
 mod static_of_fewer_templates;
 mod str_containing;

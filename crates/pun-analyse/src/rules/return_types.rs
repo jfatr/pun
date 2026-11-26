@@ -49,6 +49,7 @@ pub(super) fn registry(
         extension.register(&mut registry, contents, names);
     }
     registry.register_function_provider(Benevolent);
+    registry.register_function_provider(ConstantSprintf);
     registry.register_function_provider(ReplaceOfMixed);
     registry.register_function_provider(GetClass);
     registry.register_function_provider(ClassRelations);
@@ -1659,6 +1660,73 @@ impl FunctionReturnTypeProvider for ClassRelations {
             });
         }
         Some(variant)
+    }
+}
+
+/// SprintfFunctionDynamicReturnTypeExtension::getConstantType(): `sprintf()` of a constant format and constant
+/// arguments is the formatted constant string. Pun formats the plain `%s`, `%d` and `%%` conversions; any other
+/// format keeps the general return type.
+struct ConstantSprintf;
+
+impl Provider for ConstantSprintf {
+    fn meta() -> &'static ProviderMeta {
+        &META
+    }
+}
+
+impl FunctionReturnTypeProvider for ConstantSprintf {
+    fn targets() -> FunctionTarget {
+        FunctionTarget::Exact(b"sprintf")
+    }
+
+    fn get_return_type(
+        &self,
+        context: &ProviderContext<'_, '_, '_>,
+        invocation: &InvocationInfo<'_, '_, '_>,
+    ) -> Option<TUnion> {
+        let arguments = invocation.arguments();
+        let (format, values) = arguments.split_first()?;
+        if arguments.iter().any(|a| a.is_unpacked()) {
+            return None;
+        }
+        let format = context
+            .get_expression_type(format.value()?)?
+            .get_single_literal_string_value()?;
+        let mut values = values.iter();
+        let mut out = Vec::with_capacity(format.len());
+        let mut bytes = format.iter();
+        while let Some(&b) = bytes.next() {
+            if b != b'%' {
+                out.push(b);
+                continue;
+            }
+            let string = match bytes.next()? {
+                b'%' => {
+                    out.push(b'%');
+                    continue;
+                }
+                b's' => true,
+                b'd' => false,
+                _ => return None,
+            };
+            let ty = context.get_expression_type(values.next()?.value()?)?;
+            match ty.get_single_literal_string_value() {
+                Some(v) if string => out.extend_from_slice(v),
+                _ => {
+                    out.extend_from_slice(
+                        ty.get_single_literal_int_value()?.to_string().as_bytes(),
+                    );
+                }
+            }
+        }
+        // PHP's sprintf() ignores surplus arguments, but they are still evaluated: their types must be constant too
+        for value in values {
+            let ty = context.get_expression_type(value.value()?)?;
+            ty.get_single_literal_string_value()
+                .map(|_| ())
+                .or_else(|| ty.get_single_literal_int_value().map(|_| ()))?;
+        }
+        Some(mago_codex::ttype::get_literal_string(mago_word::word(&out)))
     }
 }
 
