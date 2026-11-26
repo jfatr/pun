@@ -161,6 +161,7 @@ mod parser;
 mod phpdoc_unions;
 mod pipe_rule;
 mod project;
+mod property_exists_fetch;
 mod property_initialization;
 mod property_initialization_bridge;
 mod property_initialization_called_methods;
