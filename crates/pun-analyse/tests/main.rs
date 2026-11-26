@@ -95,6 +95,7 @@ mod in_array_narrowing;
 mod include_file;
 mod incoming_isset;
 mod inference_parity;
+mod ini_get;
 mod initializer_array_order;
 mod initializer_expressions;
 mod initializer_holders;

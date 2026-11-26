@@ -1,0 +1,65 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 19,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 20,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: numeric-string",
+   "tip": null
+  },
+  {
+   "line": 21,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: numeric-string",
+   "tip": null
+  },
+  {
+   "line": 22,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: numeric-string",
+   "tip": null
+  },
+  {
+   "line": 23,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: numeric-string",
+   "tip": null
+  },
+  {
+   "line": 24,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 25,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 26,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|false",
+   "tip": null
+  },
+  {
+   "line": 27,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|false",
+   "tip": null
+  },
+  {
+   "line": 28,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|false",
+   "tip": null
+  }
+ ]
+}

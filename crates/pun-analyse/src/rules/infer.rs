@@ -254,6 +254,7 @@ fn observe_template_arguments<'arena>(
     } = *run;
     let mut registry = super::return_types::registry(&file.contents, names, extensions);
     super::regex_shapes::register(&mut registry, php_version);
+    registry.register_function_provider(super::ini_get::IniGet { php_version });
     let mut settings = settings.clone();
     settings.template_arguments = TemplateArgumentMode::Observe;
     settings.call_scope_observations = Vec::new();
@@ -326,6 +327,7 @@ fn analyse_observed(run: &Run<'_, '_>, observed: Observed<'_>) -> Inferred {
     wanted.extend(origins::dependencies(&origins, &wanted));
     let mut registry = super::return_types::registry(&file.contents, names, extensions);
     super::regex_shapes::register(&mut registry, php_version);
+    registry.register_function_provider(super::ini_get::IniGet { php_version });
     let found = Arc::new(Mutex::new(Found {
         allowed: if observe_variables {
             variables::allowed_expressions(program)
