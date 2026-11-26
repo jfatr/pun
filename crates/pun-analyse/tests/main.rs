@@ -18,6 +18,7 @@ mod attribute_reflection;
 mod attributes;
 mod autoload_required_files;
 mod branch_declaration_effects;
+mod built_in_parameter_types;
 mod builtin_callable_variants;
 mod builtin_method_effects;
 mod builtin_returns;

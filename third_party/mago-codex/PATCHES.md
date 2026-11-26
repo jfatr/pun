@@ -1410,3 +1410,11 @@ unless the other lies inside the subtraction (for plain objects), following
 was skipped as unreachable. mago-analyzer's PATCHES.md ("Instanceof narrowing of subtracted objects") routes the
 reconciler through this intersection. `pun-analyse/tests/fixtures/object-intersections/subtraction.php` (`child`,
 `childAndInterface`, `excluded`, `excludedUnion`, `excludedArm`, `pair`) covers it.
+
+## Built-in parameter types for untyped overrides
+
+`populator/docblock.rs` `resolve_method_inheritance()`: an untyped, undocumented parameter of a method overriding a
+built-in method now takes the built-in parameter's type, marked as a PHPDoc type. PhpDocInheritanceResolver reads
+the built-in's PHPDoc from its stub, which documents the types the prelude declares natively, so
+`SessionHandlerInterface::read($id)` makes `$id` a `string`. User parents still pass on only their PHPDoc types
+(shipfastlabs/pun#100). `crates/pun-analyse/tests/built_in_parameter_types.rs` covers it against PHPStan 2.3.5.
