@@ -1710,6 +1710,27 @@ where
         let (assertion_expression, mut assertion_variable) =
             resolve_argument_or_special_target(context, block_context, invocation, *parameter_id, this_variable);
 
+        // TypeSpecifier::createForExpr(): an argument `$a ?? $b` asserted to be a type that `$b` can never be
+        // narrows `$a`, so `str_starts_with($a ?? '', 'x')` makes `$a` a non-falsy string.
+        if assertion_variable.is_none()
+            && let Some(Expression::Binary(binary)) = assertion_expression.map(unwrap_expression)
+            && matches!(binary.operator, BinaryOperator::NullCoalesce(_))
+            && let Some(right) = artifacts.get_expression_type(binary.rhs)
+            && !variable_assertions.is_empty()
+            && variable_assertions.iter().all(|assertion| match assertion {
+                Assertion::IsType(atomic) => !can_expression_types_be_identical(
+                    context.codebase,
+                    &TUnion::from_atomic(atomic.clone()),
+                    right,
+                    false,
+                    false,
+                ),
+                _ => false,
+            })
+        {
+            assertion_variable = get_block_expression_id(binary.lhs, context, block_context);
+        }
+
         if matches!(assertion_expression, Some(Expression::Call(_)))
             && let [assertion] = variable_assertions.as_slice()
             && is_truthiness_assertion(assertion)

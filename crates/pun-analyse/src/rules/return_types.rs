@@ -78,6 +78,7 @@ pub(super) fn registry(
     registry.register_method_provider(super::enum_methods::EnumMethods);
     registry.register_method_provider(super::exception_codes::ExceptionCodes);
     registry.register_function_provider(super::flip_intersect::FlipIntersect);
+    registry.register_function_assertion_provider(super::str_containing::StrContaining);
     registry
 }
 

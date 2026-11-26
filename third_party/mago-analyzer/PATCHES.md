@@ -4452,3 +4452,9 @@ assigned. Without both, `$first[$key] ??= $box` in a loop typed the array's valu
 arguments, as ArgumentsHandler checks `ThisType($declaringClass)->isSuperTypeOf($returnType)` and `isPure()->no()`
 before invalidating one. So `$order->box !== null` survives `$shipment->add($order)` (shipfastlabs/pun#109).
 `crates/pun-analyse/tests/fluent_arguments.rs` covers it against PHPStan 2.3.5.
+## Plugin assertions through a null coalesce
+
+`invocation/post_process.rs` `resolve_invocation_assertion()`: a plugin assertion whose argument is `$a ?? $b` and has
+no expression ID now targets `$a` when every assertion is a type that `$b` can never be, as TypeSpecifier's
+`createForExpr()` does in a true context. So `str_starts_with($a ?? '', 'sk_')` makes `$a` a `non-falsy-string`
+(shipfastlabs/pun#110). `crates/pun-analyse/tests/str_containing.rs` covers it against PHPStan 2.3.5.

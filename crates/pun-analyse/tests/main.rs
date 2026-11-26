@@ -187,6 +187,7 @@ mod single_call_arguments;
 mod source_aliases;
 mod statements;
 mod static_of_fewer_templates;
+mod str_containing;
 mod str_repeat;
 mod strict_mixed;
 mod string_casing;

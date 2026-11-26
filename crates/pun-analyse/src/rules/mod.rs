@@ -80,6 +80,7 @@ mod selector;
 mod set_hook;
 mod signatures;
 mod statements;
+mod str_containing;
 mod strict;
 mod syntax;
 mod through_static;
