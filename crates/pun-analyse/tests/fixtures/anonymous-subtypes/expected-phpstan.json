@@ -1,0 +1,17 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 71,
+   "identifier": "return.type",
+   "message": "Method App\\Factory::wrong() should return App\\Other but returns App\\Shape@anonymous/subtypes.php:71.",
+   "tip": null
+  },
+  {
+   "line": 82,
+   "identifier": "return.type",
+   "message": "Method App\\Factory::plain() should return App\\Shape but returns class@anonymous/subtypes.php:82.",
+   "tip": null
+  }
+ ]
+}

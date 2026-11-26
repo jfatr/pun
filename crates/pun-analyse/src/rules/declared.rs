@@ -1876,7 +1876,12 @@ impl<'c, 'a, 'arena> Classes<'c, 'a, 'arena> {
 
     fn build(&self, name: &str) -> Option<Class> {
         let c = self.checker;
-        let k = c.codebase.get_class_like(name.as_bytes())?;
+        // An anonymous class's object type carries its display name (`Shape@anonymous/a.php:6`), which names no class
+        // in the codebase: find the class this file declares under it
+        let k = c.codebase.get_class_like(name.as_bytes()).or_else(|| {
+            let (internal, _) = c.anonymous.iter().find(|(_, display)| *display == name)?;
+            c.codebase.get_class_like(internal)
+        })?;
         let canonical = |w: &mago_word::Word| {
             c.codebase
                 .get_class_like(w.as_bytes())
@@ -1924,7 +1929,11 @@ impl<'c, 'a, 'arena> Classes<'c, 'a, 'arena> {
             })
             .collect();
         Some(Class {
-            name: original_name(k),
+            name: if k.name.as_bytes().starts_with(b"{anonymous-class:") {
+                name.to_string()
+            } else {
+                original_name(k)
+            },
             ancestors,
             templates,
             cases: k.enum_cases.keys().map(|w| text(w.as_bytes())).collect(),
