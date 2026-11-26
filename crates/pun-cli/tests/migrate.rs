@@ -485,17 +485,29 @@ fn starter_beside_phpstan() {
 }
 
 /// A phpstan.neon without a level runs no rules (PHPStan: "No rules detected"): every analyse group is turned
-/// off and no check moves to [lint], so `pun analyse` says the same.
+/// off and no check moves to [lint], so `pun analyse` says the same, and the baseline note names only `pun analyse`.
 #[test]
 fn phpstan_without_a_level_runs_no_rules() {
     let d = project(
         "phpstan-no-level",
         &[
-            ("phpstan.neon", "parameters:\n    paths: [app]\n"),
+            (
+                "phpstan.neon",
+                "includes:\n    - phpstan-baseline.neon\nparameters:\n    paths: [app]\n",
+            ),
+            (
+                "phpstan-baseline.neon",
+                "parameters:\n    ignoreErrors: []\n",
+            ),
             ("app/A.php", "<?php\n\nundefined_fn();\n"),
         ],
     );
     let (out, _, code) = pun(&d, &["migrate", "--yes"]);
+    // No check became a lint rule, so only the analyse baseline is named.
+    assert!(
+        out.contains("phpstan-baseline.neon was not copied. Run `pun analyse --generate-baseline` for a Pun baseline.\n"),
+        "{out}"
+    );
     assert_eq!(
         (counts(&out).lines().next(), code),
         (
@@ -885,7 +897,7 @@ fn phpstan_baseline_extensions_options_and_ignores() {
         "{out}"
     );
     assert!(
-        out.contains("\n ! phpstan-baseline.neon was not copied. Run `pun analyse --generate-baseline` for a Pun baseline.\n"),
+        out.contains("\n ! phpstan-baseline.neon was not copied. Run `pun analyse --generate-baseline` and `pun lint --generate-baseline` for Pun baselines.\n"),
         "{out}"
     );
     assert!(

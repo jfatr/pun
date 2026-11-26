@@ -457,6 +457,7 @@ pub struct Lint {
     pub ecosystems: Vec<&'static ExtensionMeta>,
     pub rules: Vec<LintRule>,
     pub overrides: Vec<Override>,
+    pub baseline: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -531,6 +532,7 @@ pub(crate) struct LintToml {
     rules: toml::Table,
     #[serde(default)]
     overrides: Vec<OverrideToml>,
+    baseline: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -842,6 +844,7 @@ pub(crate) fn lint(
         ecosystems,
         rules: on.into_values().collect(),
         overrides,
+        baseline: t.baseline,
     })
 }
 

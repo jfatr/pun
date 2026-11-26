@@ -375,7 +375,7 @@ pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Re
         && use_baseline
         && let Some(path) = &cfg.analyse.baseline
     {
-        let b = baseline::Baseline::read(&cfg.root.join(path))?;
+        let b = baseline::Baseline::read(&cfg.root.join(path), baseline::Kind::Analyse)?;
         unmatched_baseline = b.filter(&mut findings);
     }
     Ok(Analysed {
@@ -589,7 +589,9 @@ fn generate_baseline(
 ) -> Result<Exit> {
     let path = match path {
         Some(path) => path.to_path_buf(),
-        None => PathBuf::from(cfg.analyse.baseline.as_deref().unwrap_or(baseline::DEFAULT)),
+        None => PathBuf::from(
+            (cfg.analyse.baseline.as_deref()).unwrap_or(baseline::Kind::Analyse.default_file()),
+        ),
     };
     let mut analysed = analyse(cfg, &a.paths, false)?;
     if analysed
@@ -600,8 +602,10 @@ fn generate_baseline(
         return present(a, cfg, &analysed, started);
     }
     analysed.findings.retain(Finding::ignorable);
-    let b = baseline::Baseline::of(&analysed.findings);
-    b.write(&cfg.root.join(&path))?;
+    let b = baseline::Baseline::of(
+        (analysed.findings.iter()).map(|f| (f.rel.as_str(), f.rule.as_str(), f.message.as_str())),
+    );
+    b.write(&cfg.root.join(&path), baseline::Kind::Analyse)?;
     let n = analysed.findings.len();
     let errors = agent::count(n, "error");
     let shown = path.display();
@@ -651,7 +655,7 @@ pub(crate) fn human(
         out.push('\n');
     }
     if analysed.unmatched_baseline > 0 {
-        out.push_str(&baseline_note(&r, analysed.unmatched_baseline));
+        out.push_str(&baseline_note(&r, 0, analysed.unmatched_baseline));
     }
     out.push_str(&r.summary(&Summary {
         errors: analysed.findings.len() + analysed.malformed.len() + analysed.general.len(),
@@ -708,15 +712,21 @@ fn sources(analysed: &Analysed) -> BTreeMap<PathBuf, (String, LineIndex)> {
     out
 }
 
-pub(crate) fn baseline_note(r: &Renderer, unmatched: usize) -> String {
+/// The note for baseline entries no problem matched any more: `lint` of the lint baseline, `analyse` of the analyse
+/// one, with the command(s) that regenerate them.
+pub(crate) fn baseline_note(r: &Renderer, lint: usize, analyse: usize) -> String {
+    let unmatched = lint + analyse;
+    let run = match (lint, analyse) {
+        (0, _) => "`pun analyse --generate-baseline`",
+        (_, 0) => "`pun lint --generate-baseline`",
+        _ => "`pun lint --generate-baseline` and `pun analyse --generate-baseline`",
+    };
     let (entries, verb, them) = match unmatched {
         1 => ("entry", "matches", "it"),
         _ => ("entries", "match", "them"),
     };
     let glyph = r.look.paint(render::Role::Warning, r.look.glyph("⚠", "!"));
-    format!(
-        "{glyph} {unmatched} baseline {entries} no longer {verb}: run `pun analyse --generate-baseline` to drop {them}\n"
-    )
+    format!("{glyph} {unmatched} baseline {entries} no longer {verb}: run {run} to drop {them}\n")
 }
 
 /// GitHub annotations after the human output (`GITHUB_ACTIONS=true`): one per finding, at its line.

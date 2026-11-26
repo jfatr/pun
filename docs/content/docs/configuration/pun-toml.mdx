@@ -124,6 +124,7 @@ Risky and code-deleting fixers are [lint rules](/docs/commands/lint).
 | `groups` | `"error"`, `"warn"`, or `"off"` for every rule in a group |
 | `rules` | `"error"`, `"warn"`, or `"off"` (not `true` or `false`), or a table with `level`, `fix = "off"`, and the rule's options. `level` defaults to `"error"` |
 | `[[lint.overrides]]` | `files` (globs) and `rules`, which set rule levels for matching files |
+| `baseline` | The lint baseline file, written by `pun lint --generate-baseline`. A path outside the project is a config error |
 
 Later settings win, in this order:
 
@@ -146,7 +147,7 @@ Laravel, Pest, and PHPUnit rules also need their [extension](#extensions). PHP u
 | `preset` | `basic`, `essential`, `recommended` (default), `strict`, or `max`. Each includes the ones before it. Or a PHPStan level preset, `phpstan/level_0` to `phpstan/level_10` or `phpstan/level_max`, which runs exactly that PHPStan level. See [presets](/docs/configuration/presets#phpstan-level-presets) |
 | `paths` | Paths to analyse, instead of `[files] paths` |
 | `exclude` | Added to `[files] exclude` for analyse only |
-| `baseline` | The baseline file. A path outside the project is a config error |
+| `baseline` | The baseline file, written by `pun analyse --generate-baseline`. A path outside the project is a config error |
 | `stubs` | Stub files whose PHPDoc refines vendor symbols, as in PHPStan's `stubFiles` |
 | `scan` | Files and folders Pun reads for their classes, functions, and constants but doesn't analyse, as in PHPStan's `scanFiles` and `scanDirectories` |
 | `bootstrap` | PHPStan's `bootstrapFiles`. Pun doesn't run them: it reads their symbols as `scan` does, and Larastan reads their macros |

@@ -1039,6 +1039,11 @@ fn show() {
     assert_eq!(v["analyse"]["rules"]["undefined/function"], "on");
     assert_eq!(v["analyse"]["preset"], "basic");
     assert!(v["analyse"].get("baseline").is_none());
+    assert!(v["lint"].get("baseline").is_none());
+    let d = dir(&[("pun.toml", "[lint]\nbaseline = \"lint.toml\"\n")]);
+    let c = load(&d, &Options::default()).unwrap();
+    assert_eq!(c.lint.baseline.as_deref(), Some("lint.toml"));
+    assert_eq!(c.show()["lint"]["baseline"], "lint.toml");
     let d = dir(&[(
         "pun.toml",
         "[analyse]\nbaseline = \"b.toml\"\nstubs = [\"stubs/A.stub\"]\nscan = [\"stubs\", \"helpers.php\"]\nbootstrap = [\"tests/bootstrap.php\"]\n[[analyse.ignore]]\nrule = \"undefined/method\"\nmessage = \"#^Call#\"\ncount = 2\n",
@@ -1240,6 +1245,15 @@ fn files_paths_stay_in_the_project() {
     assert_eq!(
         err(&root, Options::default()),
         format!("{at}: [analyse] baseline: \"../outside/b.toml\" is outside the project")
+    );
+    std::fs::write(
+        root.join("pun.toml"),
+        "[lint]\nbaseline = \"../outside/lint.toml\"\n",
+    )
+    .unwrap();
+    assert_eq!(
+        err(&root, Options::default()),
+        format!("{at}: [lint] baseline: \"../outside/lint.toml\" is outside the project")
     );
     std::fs::write(
         root.join("pun.toml"),
