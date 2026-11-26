@@ -1,6 +1,7 @@
 mod anonymous;
 mod array_column;
 mod array_fill;
+mod array_merge;
 mod array_sum;
 mod arrays;
 mod assert_tags;
