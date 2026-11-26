@@ -84,10 +84,14 @@ impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for AssignmentMapWalker {
         }
     }
 
-    fn walk_assignment(&mut self, assignment: &'ast Assignment<'arena>, _context: &mut ()) {
+    fn walk_assignment(&mut self, assignment: &'ast Assignment<'arena>, context: &mut ()) {
         let right_expression_id = get_root_expression_id(assignment.rhs).unwrap_or_else(|| Word::from("isset"));
 
         self.record_targets(assignment.lhs, right_expression_id);
+        // Pun: an assignment nested in the value (`$r[] = $seen[$k] ??= $v`) assigns its own target too.
+        if matches!(assignment.rhs, Expression::Assignment(_)) {
+            self.walk_expression(assignment.rhs, context);
+        }
     }
 
     fn walk_in_foreach_target(&mut self, foreach_target: &'ast ForeachTarget<'arena>, _context: &mut ()) {

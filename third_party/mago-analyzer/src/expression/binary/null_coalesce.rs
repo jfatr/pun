@@ -447,6 +447,23 @@ fn offset_is_absent(expression: &Expression<'_>, artifacts: &AnalysisArtifacts) 
     if offset_is_absent(access.array, artifacts) {
         return true;
     }
+    // Pun: `array{}` has no offset at all, so a key that is not a literal is absent too (`$seen[$id] ??= $value`
+    // on `[]` is the right side's type, as CoalesceHandler joins it with an isset-success scope that is never).
+    let empty = artifacts.get_expression_type(access.array).is_some_and(|parent| {
+        !parent.types.is_empty()
+            && parent.types.iter().all(|atomic| match atomic {
+                TAtomic::Array(TArray::Keyed(array)) => {
+                    array.parameters.is_none() && array.known_items.as_ref().is_none_or(|items| items.is_empty())
+                }
+                TAtomic::Array(TArray::List(list)) => {
+                    list.element_type.is_never() && list.known_elements.as_ref().is_none_or(|items| items.is_empty())
+                }
+                _ => false,
+            })
+    });
+    if empty {
+        return true;
+    }
     artifacts.get_expression_type(access.array).zip(get_literal_array_key(access.index, artifacts)).is_some_and(
         |(parent, key)| {
             parent.types.iter().all(|atomic| match atomic {

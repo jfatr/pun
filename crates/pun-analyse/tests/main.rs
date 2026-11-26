@@ -42,6 +42,7 @@ mod closure_freshness;
 mod closure_from_callable;
 mod coalesce_assignment_target_scopes;
 mod coalesce_inputs;
+mod coalesce_offset_values;
 mod coalesce_scope;
 mod compound_assignment_reads;
 mod compound_signature_channels;

@@ -4437,3 +4437,11 @@ it nullsafe, which the receiver checks remove before reporting `Cannot access pr
 publicly, so a provider can tell `$object->method()` from `Class::method()`. Pun's Larastan config provider types
 `get()` only on a repository instance, as ConfigRepositoryDynamicMethodReturnTypeExtension does, and leaves the
 `Config::get()` facade call `mixed`.
+## Coalesce assignment on an offset of an empty array
+
+`expression/binary/null_coalesce.rs` `offset_is_absent()`: an offset of `array{}` (or an empty list) is absent for any
+key, not only a literal one, so `$seen[$id] ??= $value` on `[]` is the right side's type, as PHPStan's CoalesceHandler
+joins it with an isset-success scope that is never. `statement/loop/assignment_map_visitor.rs` `walk_assignment()`
+also walks an assignment nested in the right side (`$r[] = $seen[$k] ??= $v`), so the loop analysis sees its target
+assigned. Without both, `$first[$key] ??= $box` in a loop typed the array's values as `mixed`
+(shipfastlabs/pun#113). `crates/pun-analyse/tests/coalesce_offset_values.rs` covers it against PHPStan 2.3.5.

@@ -1,0 +1,47 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "values.php",
+   "line": 28,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: array<lowercase-string, CoalesceOffsetValues\\Box>",
+   "tip": null
+  },
+  {
+   "file": "values.php",
+   "line": 46,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: array<int, string>",
+   "tip": null
+  },
+  {
+   "file": "values.php",
+   "line": 47,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<string>",
+   "tip": null
+  },
+  {
+   "file": "values.php",
+   "line": 55,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: CoalesceOffsetValues\\Box",
+   "tip": null
+  },
+  {
+   "file": "values.php",
+   "line": 55,
+   "identifier": "nullCoalesce.offset",
+   "message": "Offset string on array{} on left side of ??= does not exist.",
+   "tip": null
+  },
+  {
+   "file": "values.php",
+   "line": 56,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-array<string, CoalesceOffsetValues\\Box>",
+   "tip": null
+  }
+ ]
+}
