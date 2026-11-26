@@ -83,6 +83,8 @@
 //! Type/PunContainerBindingsTest.json (`resolve()` and `app()` of a string the framework's providers bind to a closure
 //! returning one `new` instance, such as `db.transactions`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0
 //! at level 8 in a Laravel 13.44.1 app.
+//! Type/PunRelationNarrowingTest.json (a relation property without a `@property` tag narrowed by `instanceof` and
+//! `!== null`) has its assertions and errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
