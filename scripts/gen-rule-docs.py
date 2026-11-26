@@ -525,7 +525,7 @@ Layout-only Rector rules map to format rules. The migration reports any that `[f
 | `disallowedFunctionCalls`, `disallowedMethodCalls` and the other `disallowed*` lists | The `calls`, `namespaces`, `constants` and other options of the `disallowed/*` rules, with kebab-case entry keys (`allow-in`). Bundled configs such as `disallowed-dangerous-calls.neon` are copied entry by entry. `allowIn`, `allowExceptIn`, `disallowIn` and `definedIn` paths become relative to the project root, so `filesRootDir` and `allowInRootDir` aren't copied. An `ignoreErrors` entry for an entry's `errorIdentifier` goes to that entry's rule |
 | A check that is a lint rule in Pun (`array.duplicateKey`) | The lint rule, on in `[[lint.overrides]]` for `paths` and off for `excludePaths`, unless another config turns it on everywhere. `pun analyse` also reports the check's errors under the lint rule's ID, because the lint rule sees no types and can miss some |
 | `@phpstan-ignore method.notFound` | `@pun-ignore analyse/undefined/method` |
-| Baselines | Not copied. Run `pun analyse --generate-baseline`. |
+| Baselines | Not copied. Run `pun analyse --generate-baseline`, and `pun lint --generate-baseline` for the checks that became lint rules. |
 | `bleedingEdge.neon` include | `[analyse] bleeding-edge = true`, and an `"on"` line for each rule it turns on |
 | `phpVersion: 80400`, or `{min, max}` | `[php] version = "8.4"`, from `min`. A different `max` is reported and skipped |
 | Custom extensions, `rules:` classes, services tagged `phpstan.*` | Reported and skipped, one line each |
