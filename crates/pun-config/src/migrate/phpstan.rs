@@ -6,7 +6,7 @@ use anyhow::Result;
 use pun_phpstan::config::{Options, ProjectFiles, resolve_with};
 use pun_phpstan::di::Files;
 use pun_phpstan::{Array, Value};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write;
 use std::path::Path;
 
@@ -80,6 +80,7 @@ struct WithoutBaselines {
     files: ProjectFiles,
     seen: std::cell::RefCell<BTreeSet<String>>,
     virtual_file: std::cell::RefCell<Option<(String, String)>>,
+    unreadable_php: std::cell::RefCell<BTreeMap<String, String>>,
 }
 
 fn is_baseline(path: &str) -> bool {
@@ -104,6 +105,12 @@ impl Files for WithoutBaselines {
     fn is_file(&self, path: &str) -> bool {
         (self.virtual_file.borrow().as_ref()).is_some_and(|(p, _)| p == path)
             || self.files.is_file(path)
+    }
+
+    fn skip_unsupported_php(&self, path: &str, error: &pun_phpstan::phpfile::Error) -> bool {
+        (self.unreadable_php.borrow_mut())
+            .insert(pun_phpstan::php::normalize_path(path), error.to_string());
+        true
     }
 }
 
@@ -139,6 +146,7 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
         files: ProjectFiles::new(&phar, &cwd),
         seen: std::cell::RefCell::default(),
         virtual_file: std::cell::RefCell::default(),
+        unreadable_php: std::cell::RefCell::default(),
     };
     let resolved = resolve_with(&o, &files).map_err(|e| anyhow::anyhow!(e))?;
     let p = &resolved.parameters;
@@ -172,6 +180,13 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
             continue;
         }
         let rel = relative(root, inc);
+        if let Some(error) = files.unreadable_php.borrow().get(inc) {
+            out.unsupported.push((
+                rel,
+                format!("a PHP config Pun can't read ({error}); its parameters are not migrated"),
+            ));
+            continue;
+        }
         match package(&rel) {
             Some(pkg) if pkg == "phpstan/phpstan" => {
                 out.bleeding_edge |= inc.ends_with("/bleedingEdge.neon");

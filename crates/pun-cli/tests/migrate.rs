@@ -545,6 +545,34 @@ fn phpstan_without_vendor_is_left() {
 }
 
 #[test]
+fn phpstan_php_include_pun_cant_read_is_named_and_skipped() {
+    let d = project(
+        "unreadable-php-include",
+        &[
+            (
+                "phpstan.neon",
+                "includes:\n    - ./dirs.php\nparameters:\n    level: 5\n",
+            ),
+            (
+                "dirs.php",
+                "<?php\n\nreturn ['parameters' => ['laravel' => ['migrationDirectories' => [dirname(__DIR__).'/m']]]];\n",
+            ),
+        ],
+    );
+    let (out, err, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!((err.as_str(), code), ("", Some(0)), "{out}");
+    assert!(
+        out.starts_with(" ok phpstan.neon  -> [analyse] preset phpstan/level_5, "),
+        "{out}"
+    );
+    assert!(
+        out.contains("\n ! Not migrated\n   a PHP config Pun can't read (unexpected \"dirname(__DIR__).'/m\" on line 3); its parameters are not migrated\n     dirs.php\n"),
+        "{out}"
+    );
+    assert!(read(&d, "pun.toml").contains("preset = \"phpstan/level_5\"\n"));
+}
+
+#[test]
 fn agent_mode() {
     let unknown = (
         "app/Unknown.php",
