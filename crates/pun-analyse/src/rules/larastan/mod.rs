@@ -138,6 +138,8 @@ pub struct Larastan {
     pub schema_directories: Vec<PathBuf>,
     pub(crate) macros: std::sync::Arc<crate::larastan::macros::Macros>,
     pub(crate) commands: std::sync::Arc<Vec<crate::larastan::console::Command>>,
+    /// The Eloquent builder's `$passthru` for the project's Laravel version (BuilderHelper::getPassthru()).
+    pub(crate) passthru: std::sync::Arc<Vec<&'static str>>,
 }
 
 impl Larastan {
@@ -162,6 +164,7 @@ impl Larastan {
             macros: Default::default(),
             app: Default::default(),
             models: Default::default(),
+            passthru: Arc::new(forwards::passthru(None)),
         }
     }
 
@@ -347,6 +350,9 @@ impl crate::AnalyseExtension for Larastan {
         self.models = Arc::new(crate::laravel::models(app, project, codebase));
         self.commands = Arc::new(crate::larastan::console::commands(project, codebase));
         self.app = Arc::new(crate::larastan::app::App::load(&self.root));
+        self.passthru = Arc::new(forwards::passthru(
+            crate::larastan::stubs::laravel_version(&self.root).as_deref(),
+        ));
         self.macros = Arc::new(crate::larastan::macros::Macros::load(
             &self.bootstrap_files,
             &project.analysed,
@@ -379,7 +385,8 @@ impl crate::AnalyseExtension for Larastan {
             registry.register_method_provider(ConfigTypes(Arc::clone(&self.configs)));
         }
         registry.register_method_provider(HelperMethods(Arc::clone(&self.app)));
-        registry.register_method_provider(ModelForwards(contents.to_vec()));
+        registry
+            .register_method_provider(ModelForwards(contents.to_vec(), Arc::clone(&self.passthru)));
         registry.register_method_provider(ConsoleTypes(Arc::clone(&self.commands)));
         registry.register_method_provider(AppMethods(Arc::clone(&self.app), contents.to_vec()));
         registry.register_function_provider(AppFunctions(

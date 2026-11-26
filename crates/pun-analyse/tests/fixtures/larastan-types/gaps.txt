@@ -304,7 +304,6 @@ tests/Type/data/model-template-class-string.php:28
 tests/Type/data/model-template-class-string.php:29
 tests/Type/data/model-template-class-string.php:30
 tests/Type/data/model-template-class-string.php:40
-tests/Type/data/passthru-l12-15.php:10
 tests/Type/data/passthru-l12-15.php:11
 tests/Type/data/passthru-l12-15.php:12
 tests/Type/data/passthru-l12-15.php:13

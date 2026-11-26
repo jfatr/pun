@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use mago_analyzer::plugin::context::{InvocationInfo, ProviderContext};
 use mago_analyzer::plugin::provider::function::{
     CallbackInvocation, FunctionReturnTypeProvider, FunctionTarget,
@@ -52,6 +54,27 @@ const PASSTHRU: &[&str] = &[
     "dumprawsql",
     "ddrawsql",
 ];
+
+/// BuilderHelper::VERSIONED_PASSTHRU: methods Laravel added to the Eloquent builder's `$passthru` later, with the first
+/// Laravel version that has them.
+const VERSIONED_PASSTHRU: &[(&str, &str)] = &[
+    ("getcountforpagination", "12.15.0"),
+    ("insertorignorereturning", "13.30.1"),
+];
+
+/// BuilderHelper::getPassthru(): the versioned methods join the list when the project's Laravel has them.
+pub(crate) fn passthru(laravel: Option<&str>) -> Vec<&'static str> {
+    let mut passthru = PASSTHRU.to_vec();
+    if let Some(laravel) = laravel {
+        passthru.extend(
+            VERSIONED_PASSTHRU
+                .iter()
+                .filter(|(_, since)| crate::larastan::stubs::compare(laravel, since).is_ge())
+                .map(|(method, _)| *method),
+        );
+    }
+    passthru
+}
 
 static META: ProviderMeta =
     ProviderMeta::new("pun-larastan", "pun-larastan", "Larastan's call forwarding");
@@ -111,7 +134,7 @@ impl FunctionReturnTypeProvider for Tap {
     }
 }
 
-pub(crate) struct ModelForwards(pub(crate) Vec<u8>);
+pub(crate) struct ModelForwards(pub(crate) Vec<u8>, pub(crate) Arc<Vec<&'static str>>);
 
 impl Provider for ModelForwards {
     fn meta() -> &'static ProviderMeta {
@@ -180,7 +203,7 @@ impl MethodReturnTypeProvider for ModelForwards {
                 StaticClassType::Exact(name) | StaticClassType::Name(name) => *name,
                 _ => return None,
             };
-            return model_forward(context, model.as_bytes(), method, invocation);
+            return model_forward(context, &self.1, model.as_bytes(), method, invocation);
         }
         if let Some(receiver) = with_method_class(codebase, class, method) {
             return Some(TUnion::from_atomic(TAtomic::Object(TObject::Named(
@@ -200,7 +223,7 @@ impl MethodReturnTypeProvider for ModelForwards {
                 }
                 _ => return None,
             };
-            if is_passthru(method) {
+            if is_passthru(&self.1, method) {
                 return method_type(
                     codebase,
                     QUERY_BUILDER,
@@ -215,7 +238,7 @@ impl MethodReturnTypeProvider for ModelForwards {
             matches!(&t.class_type, StaticClassType::Object(TObject::Named(n)) if n.name.as_bytes().eq_ignore_ascii_case(PROXY))
         });
         if class.eq_ignore_ascii_case(PROXY) || on_proxy {
-            return higher_order_proxy(context, method, invocation);
+            return higher_order_proxy(context, &self.1, method, invocation);
         }
         if let Some(target) = invocation.inner().target.get_method_context()
             && let StaticClassType::Object(TObject::Named(n)) = &target.class_type
@@ -227,7 +250,7 @@ impl MethodReturnTypeProvider for ModelForwards {
             };
         }
         if !codebase.method_exists(class, method)
-            && let Some(ty) = forward_builder_or_relation(context, method, invocation)
+            && let Some(ty) = forward_builder_or_relation(context, &self.1, method, invocation)
                 .or_else(|| facade_mixin(context, class, method, invocation, 0))
         {
             return Some(ty);
@@ -252,7 +275,7 @@ impl MethodReturnTypeProvider for ModelForwards {
         {
             return None;
         }
-        model_forward(context, class, method, invocation)
+        model_forward(context, &self.1, class, method, invocation)
     }
 }
 
@@ -397,8 +420,8 @@ impl ModelForwards {
     }
 }
 
-fn is_passthru(method: &[u8]) -> bool {
-    PASSTHRU.contains(
+fn is_passthru(passthru: &[&str], method: &[u8]) -> bool {
+    passthru.contains(
         &String::from_utf8_lossy(method)
             .to_ascii_lowercase()
             .as_str(),
@@ -514,6 +537,7 @@ fn object_classes(ty: &TUnion) -> Vec<mago_word::Word> {
 
 fn model_forward(
     context: &ProviderContext<'_, '_, '_>,
+    passthru: &[&str],
     class: &[u8],
     method: &[u8],
     invocation: &InvocationInfo<'_, '_, '_>,
@@ -523,7 +547,7 @@ fn model_forward(
     let builder = builder_of(codebase, &model);
     let name = builder.name;
     if !codebase.method_exists(name.as_bytes(), method) {
-        return builder_forward(context, &builder, method, invocation);
+        return builder_forward(context, passthru, &builder, method, invocation);
     }
     let ty = method_type(
         codebase,
@@ -550,6 +574,7 @@ fn model_forward(
 
 fn builder_forward(
     context: &ProviderContext<'_, '_, '_>,
+    passthru: &[&str],
     builder: &TNamedObject,
     method: &[u8],
     invocation: &InvocationInfo<'_, '_, '_>,
@@ -585,7 +610,7 @@ fn builder_forward(
         || codebase.method_exists(QUERY_BUILDER, method)
         || name.starts_with("where");
     if found {
-        if is_passthru(method) && codebase.method_exists(QUERY_BUILDER, method) {
+        if is_passthru(passthru, method) && codebase.method_exists(QUERY_BUILDER, method) {
             let query = TNamedObject::new(codebase.get_class_like(QUERY_BUILDER)?.original_name);
             return method_type(
                 codebase,
@@ -626,6 +651,7 @@ fn builder_forward(
 
 fn forward_builder_or_relation(
     context: &ProviderContext<'_, '_, '_>,
+    passthru: &[&str],
     method: &[u8],
     invocation: &InvocationInfo<'_, '_, '_>,
 ) -> Option<TUnion> {
@@ -639,7 +665,7 @@ fn forward_builder_or_relation(
         r.eq_ignore_ascii_case(parent) || codebase.is_instance_of(r, parent)
     };
     if is(BUILDER) {
-        return builder_forward(context, receiver, method, invocation);
+        return builder_forward(context, passthru, receiver, method, invocation);
     }
     if !is(RELATION) {
         return None;
@@ -669,7 +695,7 @@ fn forward_builder_or_relation(
         )
     } else {
         (
-            builder_forward(context, &builder, method, invocation)?,
+            builder_forward(context, passthru, &builder, method, invocation)?,
             false,
         )
     };
@@ -836,6 +862,7 @@ fn own_collection(
 
 fn higher_order_proxy(
     context: &ProviderContext<'_, '_, '_>,
+    passthru: &[&str],
     method: &[u8],
     invocation: &InvocationInfo<'_, '_, '_>,
 ) -> Option<TUnion> {
@@ -859,7 +886,7 @@ fn higher_order_proxy(
     let forwarded = if codebase.method_exists(class, method) {
         None
     } else if codebase.is_instance_of(class, MODEL) {
-        Some(model_forward(context, class, method, invocation)?)
+        Some(model_forward(context, passthru, class, method, invocation)?)
     } else {
         return None;
     };

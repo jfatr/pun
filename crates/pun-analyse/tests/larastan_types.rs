@@ -74,6 +74,9 @@
 //! Larastan 3.15.0 at level 8 in a Laravel 13 app with the same `config/test.php`.
 //! Type/PunCollectionFilterChecksTest.json (`filter()` and `reject()` with an `is_scalar()` or `is_array()` callback)
 //! has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunPassthruVersionsTest.json (`insertOrIgnoreReturning()`, which BuilderHelper's versioned passthru forwards to
+//! the query builder from Laravel 13.30.1) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a
+//! Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
