@@ -87,6 +87,9 @@
 //! `!== null`) has its assertions and errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13 app.
 //! Type/PunMixinModelPropertiesTest.json (a relation and its `_count` read through a resource's `@mixin` model) has its
 //! assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunStorageFacadeReturnsTest.json (Storage facade calls typed by the filesystem adapter's method, which
+//! StorageMethodsClassReflectionExtension finds before the facade's `@method` tag) has its assertions from PHPStan
+//! 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

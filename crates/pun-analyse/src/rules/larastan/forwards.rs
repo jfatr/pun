@@ -249,6 +249,9 @@ impl MethodReturnTypeProvider for ModelForwards {
                 _ => Some(mago_codex::ttype::get_mixed()),
             };
         }
+        if let Some(ty) = storage_method(context, class, method, invocation) {
+            return Some(ty);
+        }
         if !codebase.method_exists(class, method)
             && let Some(ty) = forward_builder_or_relation(context, &self.1, method, invocation)
                 .or_else(|| facade_mixin(context, class, method, invocation, 0))
@@ -902,6 +905,44 @@ fn higher_order_proxy(
         })
     };
     crate::laravel::proxy_result(codebase, &name, value, returned, collection)
+}
+
+/// StorageMethodsClassReflectionExtension runs before the Storage facade's `@method` tags: a method of the filesystem
+/// manager, then of the filesystem adapter, that a call from outside may use is the facade's method (`Storage::files()`
+/// is the adapter's `array<string>`, not the tag's `array`).
+fn storage_method(
+    context: &ProviderContext<'_, '_, '_>,
+    class: &[u8],
+    method: &[u8],
+    invocation: &InvocationInfo<'_, '_, '_>,
+) -> Option<TUnion> {
+    if !class.eq_ignore_ascii_case(b"Illuminate\\Support\\Facades\\Storage") {
+        return None;
+    }
+    let codebase = context.codebase();
+    [
+        &b"Illuminate\\Filesystem\\FilesystemManager"[..],
+        b"Illuminate\\Filesystem\\FilesystemAdapter",
+    ]
+    .into_iter()
+    .find_map(|root| {
+        let found = codebase.get_declaring_method(root, method)?;
+        if !found
+            .method_metadata
+            .as_ref()
+            .is_some_and(|m| m.visibility.is_public())
+        {
+            return None;
+        }
+        let root = TNamedObject::new(codebase.get_class_like(root)?.original_name);
+        method_type(
+            codebase,
+            root.name.as_bytes(),
+            &root,
+            method,
+            Some((context, invocation)),
+        )
+    })
 }
 
 fn facade_mixin(
