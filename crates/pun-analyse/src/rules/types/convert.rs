@@ -14,6 +14,7 @@ use mago_codex::ttype::atomic::scalar::class_like_string::TClassLikeString;
 use mago_codex::ttype::atomic::scalar::float::TFloat;
 use mago_codex::ttype::atomic::scalar::int::TInteger;
 use mago_codex::ttype::atomic::scalar::string::{TStringCasing, TStringLiteral};
+use mago_codex::ttype::template::variance::Variance;
 use mago_codex::ttype::union::TUnion;
 use mago_span::{HasSpan, Span};
 use mago_syntax::cst::{Access, ArrayElement, Expression, TokenSeparatedSequence};
@@ -1355,12 +1356,23 @@ impl Checker<'_, '_> {
                     .type_parameters
                     .iter()
                     .flat_map(|p| p.iter())
-                    .map(|p| {
+                    .enumerate()
+                    .map(|(i, p)| {
                         let argument = self.to_phpstan(p);
-                        if n.is_exact {
+                        let argument = if n.is_exact {
                             pun_phpstan::types::remove_final_by_keyword_overrides(&argument)
                         } else {
                             argument
+                        };
+                        // a call-site variance (`Items<covariant Animal>`) stays on the argument, as in PHPStan's
+                        // GenericObjectType
+                        match n.get_variance(i) {
+                            Some(Variance::Covariant) => Type::Projection(true, Box::new(argument)),
+                            Some(Variance::Contravariant) => {
+                                Type::Projection(false, Box::new(argument))
+                            }
+                            Some(Variance::Bivariant) => Type::Wildcard,
+                            _ => argument,
                         }
                     })
                     .collect();

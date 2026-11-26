@@ -1,0 +1,24 @@
+{
+ "phpstan": "2.3.5",
+ "level": 6,
+ "errors": [
+  {
+   "file": "variance.php",
+   "line": 35,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: CallSiteVariance\\Items<CallSiteVariance\\Items<covariant CallSiteVariance\\Animal>>"
+  },
+  {
+   "file": "variance.php",
+   "line": 36,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: CallSiteVariance\\Items<covariant CallSiteVariance\\Animal>"
+  },
+  {
+   "file": "variance.php",
+   "line": 38,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $groups of method CallSiteVariance\\Shelter::acceptInvariant() expects CallSiteVariance\\Items<CallSiteVariance\\Items<CallSiteVariance\\Animal>>, CallSiteVariance\\Items<CallSiteVariance\\Items<covariant CallSiteVariance\\Animal>> given."
+  }
+ ]
+}
