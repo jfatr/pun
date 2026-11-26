@@ -502,6 +502,54 @@ fn build_prelude(php_version: u32) -> (CodebaseMetadata, SymbolReferences) {
             }
         }
     }
+    // A built-in method whose stub returns `array<T>` where PHPStan's functionMap says `list<T>`
+    // (`ReflectionFunctionAbstract::getParameters()`) returns a list of the stub's `T`.
+    for ((class, name), method) in &mut metadata.function_likes {
+        if class.is_empty() || !method.flags.is_built_in() {
+            continue;
+        }
+        let Some(declared) = method
+            .return_type_metadata
+            .as_ref()
+            .or(method.return_type_declaration_metadata.as_ref())
+        else {
+            continue;
+        };
+        let [TAtomic::Array(mago_codex::ttype::atomic::array::TArray::Keyed(array))] =
+            declared.type_union.types.as_ref()
+        else {
+            continue;
+        };
+        if array.known_items.is_some() || array.non_empty {
+            continue;
+        }
+        let Some([variant]) = builtins
+            .classes
+            .get(&String::from_utf8_lossy(class.as_bytes()).to_ascii_lowercase())
+            .and_then(|class| {
+                class
+                    .methods
+                    .get(&String::from_utf8_lossy(name.as_bytes()).to_ascii_lowercase())
+            })
+            .map(|method| method.variants.as_slice())
+        else {
+            continue;
+        };
+        if !variant.ret.starts_with("list<") {
+            continue;
+        }
+        let Some((_, value)) = &array.parameters else {
+            continue;
+        };
+        let list = mago_codex::ttype::atomic::array::list::TList::new(value.clone());
+        let span = declared.span;
+        method.return_type_metadata = Some(TypeMetadata::new(
+            TUnion::from_atomic(TAtomic::Array(
+                mago_codex::ttype::atomic::array::TArray::List(list),
+            )),
+            span,
+        ));
+    }
     for ((class, name), constructor) in &mut metadata.function_likes {
         if !name.as_bytes().eq_ignore_ascii_case(b"__construct") {
             continue;

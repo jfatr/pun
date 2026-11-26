@@ -174,6 +174,7 @@ mod property_receiver_settings;
 mod receiver_invalidation;
 mod reference_array_read_values;
 mod refined_isset_keys;
+mod reflection_parameter_lists;
 mod relative_path;
 mod renamed_named_argument;
 mod repeated_assertion_expressions;
