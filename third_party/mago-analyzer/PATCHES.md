@@ -4466,3 +4466,12 @@ array, as `TypeCombinator::remove()` does in AssignHandler. Before, any `mixed` 
 overlapped `[]`. So after `$end = is_array($ends) ? ($ends[$k] ?? null) : null`, `is_array($end)` makes `$ends` an array,
 and after `$verbs = is_array($body) ? array_keys($body) : []`, `count($verbs) !== 1` returning does too
 (shipfastlabs/pun#111). `crates/pun-analyse/tests/ternary_arm_remainders.rs` covers it against PHPStan 2.3.5.
+## array_map() prices a template callback with the array's values
+
+`plugin/libraries/stdlib/array/array_map.rs`: for an array without known items, a callback whose return type names
+templates (`$basket->get(...)` returning `Apple|TDefault`) is invoked with the array's value type, as
+ArrayMapFunctionReturnTypeExtension does for every array, so an omitted parameter's default resolves the template
+(`list<Apple|null>`); the declared `array_map()` signature left `TDefault` open (shipfastlabs/pun#115). Other
+callbacks keep the declared signature. Pun's `ConstantArrayMap` (`crates/pun-analyse/src/rules/return_types.rs`) runs the
+provider for such callbacks as it does for constant arrays. `crates/pun-analyse/tests/first_class_template_defaults.rs` covers a list and a
+keyed array against PHPStan 2.3.5.

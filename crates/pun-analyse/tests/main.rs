@@ -89,6 +89,7 @@ mod finally_entry_observation;
 mod finite_array_literal_keys;
 mod float_shape_keys;
 mod fluent_arguments;
+mod first_class_template_defaults;
 mod foreach_conditional_holders;
 mod function_callable;
 mod function_checks;

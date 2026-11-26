@@ -131,8 +131,13 @@ impl ConstantArrayMap {
         else {
             return false;
         };
+        // ArrayMapFunctionReturnTypeExtension prices the callback with the array's values: Pun does so for constant
+        // arrays and for a callback whose return names its own templates (`$basket->get(...)`)
+        let templated = matches!(callback.types.as_ref(), [TAtomic::Callable(callable)]
+            if callable.get_signature().and_then(|s| s.get_return_type()).is_some_and(|t| t.has_template_types()));
         invocation.argument_count() == 2
             && (callback.is_null()
+                || templated
                 || invocation
                     .get_argument(1, &[b"array"])
                     .and_then(|array| context.get_expression_type(array))
