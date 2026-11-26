@@ -4501,3 +4501,11 @@ array by reference only to move its internal pointer. PHPStan's function map mar
 (PassedByReference::readsArgument()), so ArgumentsHandler writes nothing back and the array keeps its type; Mago
 widened a `non-empty-list<string>` back to `list<string>` after `end($columns)` (shipfastlabs/pun#126). `crates/pun-analyse/tests/array_pointer_functions.rs`
 covers it against PHPStan 2.3.5.
+## Offsets of a nullsafe chain keep its short-circuit null
+
+`expression/array_access.rs`: reading an offset of a value whose `null` comes only from a nullsafe short-circuit
+(`$message?->envelope()->recipients()[0]`) keeps that `null` marked as the short-circuit's when every array's value
+type is non-nullable, so the next `->` link skips it as PHPStan's chain does; Mago made the next call's result
+nullable (shipfastlabs/pun#129). An
+array whose values may be null still reports. `crates/pun-analyse/tests/nullsafe_offset_chains.rs` covers both against
+PHPStan 2.3.5.
