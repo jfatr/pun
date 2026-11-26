@@ -52,8 +52,10 @@ const BUILT_IN: [(&str, Option<&str>); 10] = [
     ("tomasvotruba/type-coverage", Some("type-coverage")),
 ];
 
-const HANDLED: [&str; 19] = [
+const HANDLED: [&str; 21] = [
     "level",
+    "allowInRootDir",
+    "filesRootDir",
     "stubFiles",
     "paths",
     "excludePaths",
@@ -240,6 +242,7 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
                 }
                 _ if gates.contains(&name) => continue,
                 _ if entry.is_some() && !level => {
+                    let value = disallowed_paths(root, p, value);
                     out.changed.push((name, value));
                     continue;
                 }
@@ -272,10 +275,34 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
         .cloned()
         .unwrap_or_default();
     let report_unmatched = p.get_str("reportUnmatchedIgnoredErrors") != Some(&Value::Bool(false));
+    let custom = custom_identifiers(p);
     for e in ignore.values() {
-        ignore_entry(root, e, report_unmatched, &mut out);
+        ignore_entry(root, e, report_unmatched, &custom, &mut out);
     }
     Ok(out)
+}
+
+/// The `errorIdentifier` of each phpstan-disallowed-calls entry, with the rule whose list (option) declares it.
+fn custom_identifiers(p: &Array) -> Vec<(String, String)> {
+    let table = mapping::section(&["phpstan-parameters"]).table();
+    let mut out = vec![];
+    for (name, e) in table {
+        let Some(rule) = (e.get("rules").and_then(toml::Value::as_array))
+            .and_then(|r| r.first())
+            .and_then(toml::Value::as_str)
+            .filter(|r| r.starts_with("analyse/disallowed/"))
+        else {
+            continue;
+        };
+        let entries = (p.get_str(name).and_then(Value::as_array)).map(Array::values);
+        for entry in entries.into_iter().flatten() {
+            let id = (entry.as_array()).and_then(|a| a.get_str("errorIdentifier")?.as_str());
+            if let Some(id) = id {
+                out.push((id.to_string(), rule[8..].to_string()));
+            }
+        }
+    }
+    out
 }
 
 fn includes(root: &Path, config: &Path) -> Vec<String> {
@@ -452,6 +479,43 @@ fn gate_parameters() -> BTreeSet<String> {
     out
 }
 
+/// phpstan-disallowed-calls' path keys (`FilePath::fnMatch`), which resolve against `filesRootDir` (else the
+/// working directory, the project root): pun.toml's resolve against the project root.
+const DISALLOWED_PATHS: [&str; 4] = ["allowIn", "allowExceptIn", "disallowIn", "definedIn"];
+
+/// A `disallowed*` list with its entries' paths made relative to the project root.
+fn disallowed_paths(root: &Path, p: &Array, value: Value) -> Value {
+    let base = (p.get_str("filesRootDir").and_then(Value::as_str))
+        .map(|r| pun_phpstan::php::absolutize_path(&root.display().to_string(), r));
+    // the schema makes each list a list
+    let (Some(base), Value::Array(mut list)) = (base, value.clone()) else {
+        return value;
+    };
+    let path = |v: &Value| match v.as_str() {
+        Some(s) if !s.starts_with('*') => {
+            let joined = format!(
+                "{}/{}",
+                base.trim_end_matches('/'),
+                s.trim_start_matches('/')
+            );
+            Value::str(relative(root, &pun_phpstan::php::normalize_path(&joined)))
+        }
+        _ => v.clone(),
+    };
+    for entry in list.values_mut() {
+        let Value::Array(e) = entry else { continue };
+        for key in DISALLOWED_PATHS {
+            let new = match e.get_str(key) {
+                Some(Value::Array(a)) => Value::Array(Array::list(a.values().map(path))),
+                Some(v) => path(v),
+                None => continue,
+            };
+            e.set(pun_phpstan::Key::from(key), new);
+        }
+    }
+    Value::Array(list)
+}
+
 fn differences(name: &str, a: Option<&Value>, b: Option<&Value>, out: &mut Vec<(String, Value)>) {
     let table = |v: Option<&Value>| {
         v.and_then(Value::as_array)
@@ -476,7 +540,13 @@ fn differences(name: &str, a: Option<&Value>, b: Option<&Value>, out: &mut Vec<(
 
 /// One `ignoreErrors` entry as `[[analyse.ignore]]` tables. `report_unmatched` is `reportUnmatchedIgnoredErrors`,
 /// which the entry's own `reportUnmatched` overrides; pun.toml has no global, so a `false` goes on each entry.
-fn ignore_entry(root: &Path, e: &Value, report_unmatched: bool, out: &mut Phpstan) {
+fn ignore_entry(
+    root: &Path,
+    e: &Value,
+    report_unmatched: bool,
+    custom: &[(String, String)],
+    out: &mut Phpstan,
+) {
     let empty = Array::new();
     let a = e.as_array().unwrap_or(&empty);
     let mut messages: Vec<(&str, String)> = vec![];
@@ -516,7 +586,12 @@ fn ignore_entry(root: &Path, e: &Value, report_unmatched: bool, out: &mut Phpsta
     let q = |s: &str| toml::Value::String(s.to_string()).to_string();
     for id in &identifiers {
         let mut rule = None;
-        if let Some(id) = id {
+        if let Some((_, r)) = id
+            .as_ref()
+            .and_then(|id| custom.iter().find(|(c, _)| c == id))
+        {
+            rule = Some((r.clone(), id.clone()));
+        } else if let Some(id) = id {
             let entry = crate::identifiers::entry(id);
             let pun = entry
                 .and_then(|e| e.get("pun"))
@@ -891,7 +966,25 @@ fn toml_value(v: &Value) -> toml::Value {
         Value::Bool(b) => toml::Value::Boolean(*b),
         Value::Int(i) => toml::Value::Integer(*i),
         Value::Float(f) => toml::Value::Float(*f),
-        Value::Array(a) => toml::Value::Array(a.values().map(toml_value).collect()),
+        Value::Array(a) if a.is_list() => toml::Value::Array(a.values().map(toml_value).collect()),
+        // a phpstan-disallowed-calls entry: its keys kebab-case, as pun.toml writes options
+        Value::Array(a) => toml::Value::Table(
+            (a.iter())
+                .map(|(k, v)| (kebab(&k.as_string()), toml_value(v)))
+                .collect(),
+        ),
         v => toml::Value::String(v.as_str().unwrap_or_default().to_string()),
     }
+}
+
+/// `allowIn` as `allow-in`.
+fn kebab(key: &str) -> String {
+    let mut out = String::new();
+    for c in key.chars() {
+        if c.is_ascii_uppercase() {
+            out.push('-');
+        }
+        out.push(c.to_ascii_lowercase());
+    }
+    out
 }

@@ -79,7 +79,7 @@ Extensions add the rules and analysis for a framework or test tool. Each one is 
 | `phpunit` | `phpunit/phpunit` | The `phpunit` lint rules |
 | `carbon` | `nesbot/carbon` | Carbon's PHPStan extension in analyse: the methods that `Carbon::macro()` registers, and `Carbon\DatePeriodBase` |
 | `mockery` | `mockery/mockery` or `phpstan/phpstan-mockery` | phpstan-mockery's PHPStan extension in analyse: the mock types of `Mockery::mock()`, `allows()` and `expects()`, and `MockInterface\|Foo` read as `MockInterface&Foo` |
-| `disallowed-calls` | `spaze/phpstan-disallowed-calls` | The `disallowed` analyse rules. Not ported yet: it changes nothing |
+| `disallowed-calls` | `spaze/phpstan-disallowed-calls` | The `disallowed` analyse rules, which report the calls and uses their options forbid |
 | `type-coverage` | `tomasvotruba/type-coverage` | The `type-coverage` analyse rules, with the options `min` (default 99) and `measure`: `[analyse.rules."type-coverage/return"] min = 95` |
 
 | Value | Effect |

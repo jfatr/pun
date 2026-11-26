@@ -18535,6 +18535,416 @@
         "unsupported": false
       },
       {
+        "name": "disallowed.attribute",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/attribute"
+        ],
+        "note": "Merged with AttributeUsages. Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.backtick",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.break",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.class",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/namespace"
+        ],
+        "note": "Merged with NamespaceFirstClassCallableUsages, NamespaceUsages, disallowed.enum and 3 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.classConstant",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/constant"
+        ],
+        "note": "Merged with ClassConstantUsages, ConstantUsages, disallowed.constant. Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.constant",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/constant"
+        ],
+        "note": "Merged with ClassConstantUsages, ConstantUsages, disallowed.classConstant. Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.continue",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.declare",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.die",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.doWhile",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.echo",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.else",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.elseIf",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.empty",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.enum",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/namespace"
+        ],
+        "note": "Merged with NamespaceFirstClassCallableUsages, NamespaceUsages, disallowed.class and 3 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.eval",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.exit",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.for",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.foreach",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.function",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.global",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/keyword"
+        ],
+        "note": "Merged with GlobalKeyword. Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.goto",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.if",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.include",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.includeOnce",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.interface",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/namespace"
+        ],
+        "note": "Merged with NamespaceFirstClassCallableUsages, NamespaceUsages, disallowed.class and 3 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.isset",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.match",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.method",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/method"
+        ],
+        "note": "Merged with MethodCalls, MethodFirstClassCallables, NewCalls and 1 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.namespace",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/namespace"
+        ],
+        "note": "Merged with NamespaceFirstClassCallableUsages, NamespaceUsages, disallowed.class and 3 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.new",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/method"
+        ],
+        "note": "Merged with MethodCalls, MethodFirstClassCallables, NewCalls and 1 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.print",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.property",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/property"
+        ],
+        "note": "Merged with InstancePropertyUsages, StaticPropertyUsages. Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.require",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.requireOnce",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.return",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.switch",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.trait",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/namespace"
+        ],
+        "note": "Merged with NamespaceFirstClassCallableUsages, NamespaceUsages, disallowed.class and 3 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.unset",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/function"
+        ],
+        "note": "Merged with EchoCalls, EmptyCalls, EvalCalls and 16 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.variable",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/superglobal"
+        ],
+        "note": "Merged with VariableUsages. Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
+        "name": "disallowed.while",
+        "tool": "phpstan-disallowed-calls",
+        "url": "https://github.com/spaze/phpstan-disallowed-calls/blob/v4.15.1/docs/custom-rules.md",
+        "rules": [
+          "analyse/disallowed/control-structure"
+        ],
+        "note": "Merged with BreakControlStructure, ContinueControlStructure, DeclareControlStructure and 29 others (see the rule's Replaces section). Options: an entry's errorIdentifier replaces it.",
+        "unsupported": false
+      },
+      {
         "name": "div.leftNonNumeric",
         "tool": "phpstan-strict-rules",
         "url": "https://phpstan.org/error-identifiers/div.leftNonNumeric",

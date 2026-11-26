@@ -853,3 +853,101 @@ services:
     assert_eq!((p.php_version, p.unsupported), (None, vec![]));
     std::fs::remove_dir_all(d).unwrap();
 }
+
+#[test]
+fn carries_disallowed_calls_lists_into_rule_options() {
+    use pun_phpstan::Value as V;
+    let ext = "vendor/spaze/phpstan-disallowed-calls";
+    let neon = format!(
+        "includes:
+    - {ext}/extension.neon
+    - {ext}/disallowed-dangerous-calls.neon
+parameters:
+    level: 0
+    filesRootDir: %currentWorkingDirectory%/app
+    disallowedFunctionCalls:
+        -
+            function: 'var_dump()'
+            allowIn: ['Legacy/*', '*/tests/*']
+            errorIdentifier: no.dump
+        -
+            function: 'Foo\\bar()'
+            definedIn: 'lib/*.php'
+            allowParamsAnywhere:
+                2: 1
+    ignoreErrors:
+        - identifier: no.dump
+          path: app/Models/User.php
+"
+    );
+    let d = project(
+        &neon,
+        &[
+            (
+                &format!("{ext}/extension.neon"),
+                include_str!("../../../pun-analyse/tests/fixtures/disallowed/extension.neon"),
+            ),
+            (
+                &format!("{ext}/disallowed-dangerous-calls.neon"),
+                include_str!(
+                    "../../../pun-analyse/tests/fixtures/disallowed/config/bundled-dangerous.neon"
+                ),
+            ),
+        ],
+    );
+    let p = from_phpstan(&d, &d.join("phpstan.neon")).unwrap();
+    assert!(p.extensions.contains("spaze/phpstan-disallowed-calls"));
+    // filesRootDir is folded into the paths, so it is no unsupported parameter
+    assert!(p.unsupported.is_empty(), "{:?}", p.unsupported);
+    let mut parts = Parts::default();
+    compose(&d, &mut parts, &p).unwrap();
+    let text = parts.render();
+    assert!(text.contains("disallowed-calls = \"on\""), "{text}");
+    let cfg = crate::from_toml(&d, &text).unwrap();
+    let rule = (cfg.analyse.rules.iter())
+        .find(|r| r.id == "analyse/disallowed/function")
+        .unwrap();
+    let calls = rule.options["calls"].as_array().unwrap();
+    // the dangerous config's 20 entries, then the project's own
+    assert_eq!(calls.len(), 22, "{text}");
+    assert_eq!(calls[0]["function"], "apache_setenv()");
+    assert_eq!(
+        calls[20],
+        serde_json::json!({
+            "function": "var_dump()",
+            "allow-in": ["app/Legacy/*", "*/tests/*"],
+            "error-identifier": "no.dump",
+        })
+    );
+    assert_eq!(
+        calls[21],
+        serde_json::json!({
+            "function": "Foo\\bar()",
+            "defined-in": "app/lib/*.php",
+            "allow-params-anywhere": {"2": 1},
+        })
+    );
+    let ignore = &cfg.analyse.ignore[0];
+    assert_eq!(ignore.rule.as_deref(), Some("analyse/disallowed/function"));
+    assert_eq!(ignore.identifier.as_deref(), Some("no.dump"));
+    // back to PHPStan's camelCase keys for the rules
+    let parameters = cfg.analyse.parameters(&d);
+    let calls = parameters
+        .get_str("disallowedFunctionCalls")
+        .and_then(V::as_array)
+        .unwrap();
+    let own = calls.values().nth(20).and_then(V::as_array).unwrap();
+    assert_eq!(own.get_str("errorIdentifier"), Some(&V::str("no.dump")));
+    let params = (calls.values().last().and_then(V::as_array))
+        .and_then(|e| e.get_str("allowParamsAnywhere"))
+        .and_then(V::as_array)
+        .unwrap();
+    assert_eq!(params.get_str("2"), Some(&V::Int(1)));
+    assert_eq!(
+        own.get_str("allowIn")
+            .and_then(V::as_array)
+            .map(pun_phpstan::Array::len),
+        Some(2)
+    );
+    std::fs::remove_dir_all(d).unwrap();
+}

@@ -59,6 +59,7 @@ mod decimal_string_producers;
 mod declaration_purity;
 mod definite_array_intersections;
 mod destructuring_assignment_scopes;
+mod disallowed_calls;
 mod dispatch_contracts;
 mod duplicate_array_keys;
 mod dynamic_callable_references;

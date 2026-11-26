@@ -99,6 +99,7 @@ pub(crate) struct Checks {
     pub(super) type_aliases: Vec<(String, String)>,
     reported: Option<crate::project::Reported>,
     extension_identifiers: HashSet<String>,
+    disallowed: Option<super::Disallowed>,
     method_rules: crate::MethodRules,
     pub(super) strict: crate::StrictRules,
     pub(super) exceptions: crate::Exceptions,
@@ -421,6 +422,7 @@ impl Checks {
             type_aliases: project.type_aliases.clone(),
             reported: project.reported.clone(),
             extension_identifiers: project.extension_identifiers.clone(),
+            disallowed: (!project.disallowed.is_empty()).then(|| project.disallowed.clone()),
             method_rules: project.method_rules,
             patched_docs: patched_docs(codebase),
             classes: Default::default(),
@@ -557,6 +559,10 @@ fn checker<'a, 'arena>(
         names, codebase, program,
     ));
     typed.extend(super::debug::typed_expressions(names, codebase, program));
+    typed.extend(super::disallowed::typed_expressions(
+        project.disallowed.is_some(),
+        program,
+    ));
     typed.extend(arrays::typed_expressions(program));
     typed.extend(super::names::typed_class_constants(program, project.level));
     typed.extend(super::scope::typed_method_receivers(program));
@@ -729,6 +735,7 @@ fn checker<'a, 'arena>(
         toggled: &project.toggled,
         by_ref_foreach: Vec::new(),
         method_rules: project.method_rules,
+        disallowed: project.disallowed.as_ref(),
         errors: Vec::new(),
     }
 }

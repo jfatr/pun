@@ -1360,6 +1360,10 @@ fn pun_toml_errors() {
             "[analyse.rules] `type-coverage/return`: min = \"high\": expected a number",
         ),
         (
+            "[analyse.rules]\n\"disallowed/function\" = { calls = [\"var_dump()\"] }\n",
+            "[analyse.rules] `disallowed/function`: calls = [\"var_dump()\"]: expected a list of tables",
+        ),
+        (
             "[format.rules]\n\"strings/single-quote\" = \"yes\"\n",
             "`strings/single-quote` must be true, false or a table of options",
         ),
@@ -2085,6 +2089,26 @@ fn analyse_parameters() {
     assert_eq!(
         p.get_str("deprecationRulesInstalled"),
         Some(&V::Bool(false))
+    );
+}
+
+#[test]
+fn disallowed_entries_keep_their_numbers() {
+    use pun_phpstan::Value as V;
+    let toml = "[extensions]\ndisallowed-calls = \"on\"\n\n[analyse.rules.\"disallowed/function\"]\ncalls = [{ function = \"f()\", allow-params-anywhere = { 1 = 2, 2 = 1.5 } }]\n";
+    let d = dir(&[("pun.toml", toml)]);
+    let on = load(&d, &Options::default())
+        .unwrap()
+        .analyse
+        .parameters(&d);
+    let entry = (on.get_str("disallowedFunctionCalls").and_then(V::as_array))
+        .and_then(|l| l.values().next())
+        .and_then(V::as_array)
+        .unwrap();
+    let params = (entry.get_str("allowParamsAnywhere").and_then(V::as_array)).unwrap();
+    assert_eq!(
+        (params.get_str("1"), params.get_str("2")),
+        (Some(&V::Int(2)), Some(&V::Float(1.5)))
     );
 }
 

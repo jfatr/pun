@@ -115,6 +115,7 @@ use statements::{Frame, FrameKind};
 pub(crate) use dead_code::conditions_in_traits;
 pub(crate) use dead_code::impure_points;
 pub(crate) use dead_code::{dependency_keys, key_symbol};
+pub use disallowed::Disallowed;
 pub(crate) use driver::Switches;
 pub(crate) use driver::{Checks, Natives, check_file};
 pub(crate) use facts::Comments;
@@ -154,6 +155,7 @@ pub(crate) fn reports(identifier: &str) -> bool {
         || date_interval::IDENTIFIERS.contains(&identifier)
         || date_time::IDENTIFIERS.contains(&identifier)
         || by_ref_foreach::IDENTIFIERS.contains(&identifier)
+        || disallowed::IDENTIFIERS.contains(&identifier)
 }
 
 pub(crate) const DISCOVERING_SYMBOLS_TIP: &str =
@@ -294,6 +296,7 @@ pub(crate) struct Checker<'a, 'arena> {
     toggled: &'a driver::Toggled,
     by_ref_foreach: by_ref_foreach::Entries,
     method_rules: crate::MethodRules,
+    disallowed: Option<&'a disallowed::Disallowed>,
     errors: Vec<Error>,
 }
 

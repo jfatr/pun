@@ -30,7 +30,7 @@ pub use project::{
 };
 pub use pun_tokens::PhpVersion;
 pub use relative_path::RelativePath;
-pub use rules::{Larastan, LarastanSwitches, TypeCoverage};
+pub use rules::{Disallowed, Larastan, LarastanSwitches, TypeCoverage};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Error {

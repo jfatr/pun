@@ -549,6 +549,7 @@ mod tests {
             anonymous: Default::default(),
             property_access: Default::default(),
             relative_path: &project.relative_path,
+            disallowed: None,
             types: Default::default(),
             keep_void_types: Default::default(),
             native_types: Default::default(),

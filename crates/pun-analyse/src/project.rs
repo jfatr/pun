@@ -93,6 +93,8 @@ pub struct Project {
     /// The identifiers an enabled extension's config entries give its errors (disallowed-calls' `errorIdentifier`):
     /// kept although no rule claims them, as an extension's errors without an identifier are.
     pub extension_identifiers: std::collections::HashSet<String>,
+    /// phpstan-disallowed-calls' parameters (`analyse/disallowed/*`).
+    pub disallowed: crate::Disallowed,
     pub method_rules: MethodRules,
 }
 
@@ -610,8 +612,10 @@ impl Project {
                 .collect(),
             reported: None,
             extension_identifiers: std::collections::HashSet::new(),
+            disallowed: crate::Disallowed::from_params(params, &root.to_string_lossy()),
             method_rules: MethodRules::default(),
         };
+        project.extension_identifiers = project.disallowed.identifiers();
         let stubs: Vec<_> = (project.extensions())
             .flat_map(|e| e.stub_files(root))
             .collect();
@@ -711,6 +715,7 @@ impl Project {
             stubs: Vec::new(),
             reported: None,
             extension_identifiers: std::collections::HashSet::new(),
+            disallowed: crate::Disallowed::default(),
             method_rules: MethodRules::default(),
         }
     }
