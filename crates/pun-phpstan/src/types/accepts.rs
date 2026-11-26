@@ -273,6 +273,12 @@ pub fn accepts_with(a: &Type, b: &Type, strict: bool, sm: StrictMixed) -> Tri {
         T::ConstArray(c) if c.unsealed.is_none() && !matches!(b, T::ConstArray(_)) => {
             our_keys(c, b, strict, sm)
         }
+        T::ConstArray(c) if c.unsealed.is_none() => match b {
+            T::ConstArray(theirs) if theirs.unsealed.is_none() => {
+                const_array_keys(c, theirs, strict, sm)
+            }
+            _ => is_super_type_of(a, b),
+        },
         T::Iterable(key, item) => {
             if b.is_constant_array().yes() && b.is_iterable_at_least_once().no() {
                 return Tri::Yes;
@@ -387,6 +393,35 @@ fn our_keys(c: &super::ConstArray, b: &Type, strict: bool, sm: StrictMixed) -> T
         result = result.and(accepts);
     }
     result.and(b.is_array())
+}
+
+/// `ConstantArrayType::checkOurKeys()` with a constant array: each of our offsets accepts the value at the same
+/// offset, so `array{quantity: float}` accepts `array{quantity: int}`.
+fn const_array_keys(
+    c: &super::ConstArray,
+    theirs: &super::ConstArray,
+    strict: bool,
+    sm: StrictMixed,
+) -> Tri {
+    let mut result = Tri::Yes;
+    for (i, (key, value)) in c.keys.iter().zip(&c.values).enumerate() {
+        let optional = c.is_optional_key(i);
+        let Some(j) = theirs.keys.iter().position(|k| k == key) else {
+            if optional {
+                continue;
+            }
+            return Tri::No;
+        };
+        if theirs.is_optional_key(j) && !optional {
+            result = result.and(Tri::Maybe);
+        }
+        let accepts = accepts_with(value, &theirs.values[j], strict, sm);
+        if accepts.no() {
+            return Tri::No;
+        }
+        result = result.and(accepts);
+    }
+    result
 }
 
 fn string_accepts(a: &Type, b: &Type, strict: bool) -> Tri {

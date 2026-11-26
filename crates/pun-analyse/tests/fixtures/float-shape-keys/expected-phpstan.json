@@ -1,0 +1,24 @@
+{
+ "phpstan": "2.3.5",
+ "level": 9,
+ "errors": [
+  {
+   "file": "shapes.php",
+   "line": 30,
+   "identifier": "return.type",
+   "message": "Method FloatShapeKeys\\Prices::text() should return array{quantity: float} but returns array{quantity: string}."
+  },
+  {
+   "file": "shapes.php",
+   "line": 36,
+   "identifier": "return.type",
+   "message": "Method FloatShapeKeys\\Prices::narrower() should return array{quantity: int} but returns array{quantity: float}."
+  },
+  {
+   "file": "shapes.php",
+   "line": 42,
+   "identifier": "return.type",
+   "message": "Method FloatShapeKeys\\Prices::missing() should return array{quantity: float, label: string} but returns array{quantity: int}."
+  }
+ ]
+}

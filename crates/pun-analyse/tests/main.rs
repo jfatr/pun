@@ -81,6 +81,7 @@ mod filter_functions;
 mod filtered_named_arguments;
 mod finally_entry_observation;
 mod finite_array_literal_keys;
+mod float_shape_keys;
 mod foreach_conditional_holders;
 mod function_callable;
 mod function_checks;
