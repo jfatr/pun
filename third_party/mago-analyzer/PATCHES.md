@@ -4431,3 +4431,9 @@ can be null (`containsNullsafe() && containsNull($receiverType)`). A plain fetch
 fetch or call after a `?->` link on a nullable receiver (`$h?->maybe->n`, `$h?->maybe->count()`) adds the null and marks
 it nullsafe, which the receiver checks remove before reporting `Cannot access property $n on Box|null`
 (shipfastlabs/pun#92). `crates/pun-analyse/tests/nullsafe_nullable_chains.rs` covers it.
+## Method invocation kind is public
+
+`lib.rs` re-exports `invocation::MethodInvocationKind`, the kind `MethodTargetContext::invocation_kind` already carries
+publicly, so a provider can tell `$object->method()` from `Class::method()`. Pun's Larastan config provider types
+`get()` only on a repository instance, as ConfigRepositoryDynamicMethodReturnTypeExtension does, and leaves the
+`Config::get()` facade call `mixed`.

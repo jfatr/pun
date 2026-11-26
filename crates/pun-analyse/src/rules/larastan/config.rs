@@ -249,7 +249,14 @@ impl MethodReturnTypeProvider for Types {
             return None;
         }
         let repository = is(b"Illuminate\\Config\\Repository");
-        if method.eq_ignore_ascii_case(b"get") && repository {
+        // ConfigRepositoryDynamicMethodReturnTypeExtension types `get()` on a repository instance; the facade's
+        // `Config::get()` keeps its `@method static mixed get()` (only `Config::collection()` has an extension)
+        let instance = invocation
+            .inner()
+            .target
+            .get_method_context()
+            .is_none_or(|t| t.invocation_kind == mago_analyzer::MethodInvocationKind::Instance);
+        if method.eq_ignore_ascii_case(b"get") && repository && instance {
             self.get(context, invocation)
         } else if method.eq_ignore_ascii_case(b"collection") && (repository || is(CONFIG)) {
             self.collection(context, invocation)

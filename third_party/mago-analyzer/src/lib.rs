@@ -55,6 +55,8 @@ pub mod context;
 mod expression;
 mod formula;
 mod invocation;
+
+pub use invocation::MethodInvocationKind;
 mod native;
 mod readonly;
 mod reconciler;

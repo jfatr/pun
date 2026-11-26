@@ -69,6 +69,9 @@
 //! Type/PunBenevolentTranslationsTest.json (`__()` and `trans_choice()` joined with other values in a ternary, `match`
 //! and `.=`, a union that stays benevolent when every member comes from a benevolent input) has its assertions and
 //! errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13 app.
+//! Type/PunConfigFacadeGetTest.json (`checkConfigTypes` types `config()` and a repository's `get()` from the config
+//! file, while the `Config::get()` facade call stays `mixed`) has its assertions and errors from PHPStan 2.3.7 with
+//! Larastan 3.15.0 at level 8 in a Laravel 13 app with the same `config/test.php`.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

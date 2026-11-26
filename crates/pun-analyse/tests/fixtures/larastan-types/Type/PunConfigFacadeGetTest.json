@@ -1,0 +1,32 @@
+{
+    "test": "Type/PunConfigFacadeGetTest",
+    "configs": [
+        "tests/Type/data/config-with-config-paths.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-config-facade-get.php",
+            "declares": [
+                "punconfigfacadeget\\test",
+                "punconfigfacadeget\\guards",
+                "punconfigfacadeget\\literal"
+            ],
+            "asserts": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
+            ],
+            "errors": [
+                {
+                    "line": 32,
+                    "identifier": "function.alreadyNarrowedType",
+                    "message": "Call to function is_string() with 'bar' will always evaluate to true.",
+                    "tip": "Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your %configurationFile%."
+                }
+            ]
+        }
+    ]
+}
