@@ -4485,3 +4485,12 @@ takes the parameter defaults, which `expression/closure.rs` and `expression/arro
 optional parameter's default as a contravariant observation, as `collectSites()` does; an argument read from a
 possibly-missing offset no longer leaves the parameter possibly undefined (shipfastlabs/pun#123).
 `crates/pun-analyse/tests/bleeding_edge_closure_parameters.rs` covers it against PHPStan 2.3.5 with `bleedingEdge.neon`.
+## A raw declared class is no template-argument send target
+
+`template_arguments.rs` `Observed::observe_send()`: a declared object's argument that type expansion filled in for a
+raw class name (`from_template_fallback()`, as in a closure's `: Models` return type) is skipped for returns,
+assignments and `@var` sends. PHPStan's declared type there is an ObjectType without arguments, so the observation
+pass learns nothing from it; Mago sent the markers to the template bounds and resolved
+`fn (): Models => new Models([new Apple])` to `Models<int|string, object>` when `Models` inherits its constructor
+(shipfastlabs/pun#124). `crates/pun-analyse/tests/bleeding_edge_inherited_constructors.rs` covers it against PHPStan
+2.3.5 with `bleedingEdge.neon`.

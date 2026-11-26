@@ -564,6 +564,11 @@ impl Observed {
                 let Some(declared_argument) = declared_arguments.get(i) else {
                     continue;
                 };
+                // Pun: an argument expansion filled in for a raw class (`fn (): Models => ...`) is no target: PHPStan's
+                // declared type is an ObjectType without arguments there
+                if !call_argument && declared_argument.from_template_fallback() {
+                    continue;
+                }
                 let Some(argument) = get_specialized_template_type(
                     codebase,
                     *template,

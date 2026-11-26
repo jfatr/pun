@@ -20,6 +20,7 @@ mod attribute_reflection;
 mod attributes;
 mod autoload_required_files;
 mod bleeding_edge_closure_parameters;
+mod bleeding_edge_inherited_constructors;
 mod branch_declaration_effects;
 mod built_in_parameter_types;
 mod builtin_callable_variants;
