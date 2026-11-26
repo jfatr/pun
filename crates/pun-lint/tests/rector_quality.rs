@@ -6,10 +6,6 @@
 //! `format(pun lint --fix) == format(expected)` with format being the laravel preset, and the text edits must give the
 //! expected bytes before format too.
 //!
-//! RemoveDeadIfBlockRector/Pun/colon_leftover_branches: Rector prints the kept `elseif` and `else` of an
-//! alternative-syntax `if` it prints anew after a braced body (`} else: echo 2;`), which does not parse; Pun prints them
-//! in braces.
-//!
 //! RemoveFilterVarOnExactTypeRector/Pun/moved_operation_parentheses,
 //! RemoveDeadZeroAndOneOperationRector/Pun/kept_operation_parentheses and RecastingRemovalRector/Pun/operand_parentheses:
 //! Rector prints the value it keeps without the
