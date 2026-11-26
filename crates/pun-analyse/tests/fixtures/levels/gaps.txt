@@ -74,7 +74,6 @@
 5 Methods/CallMethodsRuleTest::testBug12544
 5 Methods/CallMethodsRuleTest::testBug3465
 5 Methods/CallMethodsRuleTest::testBug5536
-5 Methods/CallMethodsRuleTest::testBug7369
 5 Methods/CallMethodsRuleTest::testBug8048
 5 Methods/CallMethodsRuleTest::testBug8888
 5 Methods/CallMethodsRuleTest::testSiblingMethodPrototype
@@ -89,7 +88,6 @@
 9 Methods/CallMethodsRuleTest::testBug12544
 9 Methods/CallMethodsRuleTest::testBug3465
 9 Methods/CallMethodsRuleTest::testBug5536
-9 Methods/CallMethodsRuleTest::testBug7369
 9 Methods/CallMethodsRuleTest::testBug8048
 9 Methods/CallMethodsRuleTest::testBug8888
 9 Methods/CallMethodsRuleTest::testSiblingMethodPrototype
@@ -140,7 +138,6 @@
 5 Classes/InstantiationRuleTest::testInstantiation
 5 Functions/CallToFunctionParametersRuleTest::testBug6560#0
 5 Functions/CallToFunctionParametersRuleTest::testBug6560#1
-5 Functions/CallToFunctionParametersRuleTest::testNamedParametersForMultiVariantFunctions
 5 Methods/CallMethodsRuleTest::testBug11559c
 5 Methods/CallMethodsRuleTest::testBug4608
 5 Properties/AccessPropertiesRuleTest::testAccessProperties
@@ -148,7 +145,6 @@
 5 Properties/AccessPropertiesRuleTest::testAccessPropertiesWithoutUnionTypes
 9 Functions/CallToFunctionParametersRuleTest::testBug6560#0
 9 Functions/CallToFunctionParametersRuleTest::testBug6560#1
-9 Functions/CallToFunctionParametersRuleTest::testNamedParametersForMultiVariantFunctions
 9 Methods/CallMethodsRuleTest::testBug11559c
 9 Methods/CallMethodsRuleTest::testBug4608
 # an-types2: `Foo::class` of an unknown class is no class-string (Pun's constant strings carry no isClassString), Closure::bind()
