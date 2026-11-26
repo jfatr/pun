@@ -1,0 +1,19 @@
+{
+    "test": "Type/PunReturnedMacrosTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-returned-macros.php",
+            "declares": [
+                "punreturnedmacros\\routes"
+            ],
+            "asserts": [
+                12,
+                13
+            ],
+            "errors": []
+        }
+    ]
+}

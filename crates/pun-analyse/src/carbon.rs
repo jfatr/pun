@@ -90,7 +90,7 @@ fn signature(
             let is_static = f.method_metadata.as_ref().is_some_and(|m| m.is_static);
             Some((f, is_static))
         }
-        Definition::Mixin(_) => None,
+        Definition::Mixin(_) | Definition::Returned(..) => None,
     }
 }
 

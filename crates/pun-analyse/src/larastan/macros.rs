@@ -46,6 +46,8 @@ pub(crate) enum Definition {
     Method(String, String),
     /// `X::mixin(new Mixin)`: Macroable::mixin() registers each public and protected method's returned closure.
     Mixin(String),
+    /// `X::macro('name', $this->method())`: the closure the class's method returns.
+    Returned(String, String),
 }
 
 pub(crate) fn discovered_providers(root: &Path) -> Vec<PathBuf> {
@@ -128,6 +130,20 @@ impl Macros {
         let mut seen = HashSet::new();
         let mut read_files = Reader::default();
         read_files.read_all(files, &mut seen);
+        // A class a provider instantiates may register the macros (laravel/head's `(new HeadRouteMacros)->register()`
+        // in its service provider); it sits where Composer's PSR-4 autoloading finds it.
+        let helpers: Vec<PathBuf> = (autoloaded.iter())
+            .filter(|a| {
+                !read_files
+                    .classes
+                    .contains(&String::from_utf8_lossy(&a.class).to_ascii_lowercase())
+                    && (read_files.instantiated)
+                        .contains(&String::from_utf8_lossy(&a.class).to_ascii_lowercase())
+            })
+            .map(|a| a.path.clone())
+            .filter(|path| registers(&path))
+            .collect();
+        read_files.read_all(helpers, &mut seen);
         // A mixin class Pun has not read yet sits in the file named after it, as PSR-4 autoloading wants.
         let mixins: HashSet<String> = (read_files.registrations.iter())
             .filter_map(|(_, _, definition)| match definition {
@@ -202,6 +218,17 @@ impl Macros {
                     instance: None,
                     native: false,
                 },
+                Definition::Returned(class, method) => {
+                    let key = (class.to_ascii_lowercase(), method.to_ascii_lowercase());
+                    let Some(ty) = read_files.returned.get(&key) else {
+                        continue;
+                    };
+                    Macro {
+                        ty: populated(ty.clone()),
+                        instance: None,
+                        native: false,
+                    }
+                }
                 Definition::Mixin(mixin) => {
                     let methods = read_files.mixin_methods.get(&mixin.to_ascii_lowercase());
                     let defined = macros.macros.entry(home).or_default();
@@ -436,6 +463,10 @@ struct Reader {
     /// A mixin class's public and protected methods (lowercased class), each with the native return type of the
     /// closure it returns.
     mixin_methods: HashMap<String, Vec<(String, Option<TUnion>)>>,
+    /// Each method that returns a closure (lowercased class and method): the closure's native return type.
+    returned: HashMap<(String, String), Option<TUnion>>,
+    /// The classes `new` names in the files read.
+    instantiated: HashSet<String>,
 }
 
 /// The `X::macro()` calls of `files` and of the files they include: the class each is called on, the macro's name
@@ -552,8 +583,46 @@ impl Walker<'_, '_, '_> {
         }
     }
 
+    /// The closure a method body returns, directly or through the variable it was assigned to: its native return
+    /// type.
+    fn returned_closure(&self, statements: &[Statement]) -> Option<Option<TUnion>> {
+        let returned = statements.iter().find_map(|s| match s {
+            Statement::Return(Return { value, .. }) => Some(*value),
+            _ => None,
+        })??;
+        let returned = match returned {
+            Expression::Variable(Variable::Direct(v)) => statements.iter().find_map(|s| match s {
+                Statement::Expression(ExpressionStatement {
+                    expression: Expression::Assignment(a),
+                    ..
+                }) if matches!(a.lhs, Expression::Variable(Variable::Direct(l)) if l.name == v.name) => {
+                    Some(a.rhs)
+                }
+                _ => None,
+            })?,
+            e => e,
+        };
+        match returned {
+            Expression::Closure(c) => {
+                Some(c.return_type_hint.as_ref().and_then(|h| self.hint(&h.hint)))
+            }
+            Expression::ArrowFunction(f) => {
+                Some(f.return_type_hint.as_ref().and_then(|h| self.hint(&h.hint)))
+            }
+            _ => None,
+        }
+    }
+
     fn definition(&self, e: &Expression) -> Option<Definition> {
         match e {
+            Expression::Call(Call::Method(MethodCall {
+                object: Expression::Variable(Variable::Direct(this)),
+                method: ClassLikeMemberSelector::Identifier(method),
+                ..
+            })) if this.name == b"$this" => Some(Definition::Returned(
+                self.class.clone()?,
+                String::from_utf8_lossy(method.value).into_owned(),
+            )),
             Expression::Closure(c) => Some(Definition::Closure(
                 c.return_type_hint.as_ref().and_then(|h| self.hint(&h.hint)),
                 build_synthetic_name("closure", self.file, c.span()),
@@ -692,23 +761,15 @@ impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for Walker<'_, '_, 'arena> {
                 .modifiers
                 .iter()
                 .any(|m| matches!(m, Modifier::Private(_)));
+            let returned = match &m.body {
+                MethodBody::Concrete(body) => self.returned_closure(body.statements.as_slice()),
+                MethodBody::Abstract(_) => None,
+            };
+            if let Some(ty) = &returned {
+                self.reader.returned.insert(key.clone(), ty.clone());
+            }
             if !private && !m.name.value.starts_with(b"__") {
-                let returned = match &m.body {
-                    MethodBody::Concrete(body) => body.statements.iter().find_map(|s| match s {
-                        Statement::Return(Return { value, .. }) => Some(*value),
-                        _ => None,
-                    }),
-                    MethodBody::Abstract(_) => None,
-                };
-                let ty = match returned.flatten() {
-                    Some(Expression::Closure(c)) => {
-                        c.return_type_hint.as_ref().and_then(|h| self.hint(&h.hint))
-                    }
-                    Some(Expression::ArrowFunction(f)) => {
-                        f.return_type_hint.as_ref().and_then(|h| self.hint(&h.hint))
-                    }
-                    _ => None,
-                };
+                let ty = returned.flatten();
                 let name = String::from_utf8_lossy(m.name.value).into_owned();
                 (self.reader.mixin_methods.entry(class.to_ascii_lowercase()))
                     .or_default()
@@ -792,6 +853,16 @@ impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for Walker<'_, '_, 'arena> {
 
     fn walk_out_foreach(&mut self, _: &'ast Foreach<'arena>, (): &mut ()) {
         self.loops.pop();
+    }
+
+    fn walk_in_instantiation(&mut self, new: &'ast Instantiation<'arena>, (): &mut ()) {
+        if let Expression::Identifier(class) = new.class {
+            let class = self
+                .name(class)
+                .trim_start_matches('\\')
+                .to_ascii_lowercase();
+            self.reader.instantiated.insert(class);
+        }
     }
 
     fn walk_in_static_method_call(&mut self, call: &'ast StaticMethodCall<'arena>, (): &mut ()) {

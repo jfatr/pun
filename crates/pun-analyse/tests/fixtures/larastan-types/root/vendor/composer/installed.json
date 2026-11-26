@@ -9432,6 +9432,25 @@
                     ]
                 }
             }
+        },
+        {
+            "name": "pun/vendor-route-macros",
+            "version": "1.0.0",
+            "version_normalized": "1.0.0.0",
+            "type": "library",
+            "install-path": "../pun/vendor-route-macros",
+            "autoload": {
+                "psr-4": {
+                    "PunVendorRouteMacros\\": "src/"
+                }
+            },
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "PunVendorRouteMacros\\RouteMacrosServiceProvider"
+                    ]
+                }
+            }
         }
     ],
     "dev": true,

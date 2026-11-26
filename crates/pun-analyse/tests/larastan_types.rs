@@ -77,6 +77,9 @@
 //! Type/PunPassthruVersionsTest.json (`insertOrIgnoreReturning()`, which BuilderHelper's versioned passthru forwards to
 //! the query builder from Laravel 13.30.1) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a
 //! Laravel 13.44.1 app.
+//! Type/PunReturnedMacrosTest.json (Route macros whose closure a method returns, registered by a class the package
+//! provider of root/vendor/pun/vendor-route-macros instantiates) has its assertions from PHPStan 2.3.7 with Larastan
+//! 3.15.0 at level 8 in a Laravel 13.44.1 app with the same package installed.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
