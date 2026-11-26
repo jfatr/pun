@@ -1,0 +1,78 @@
+{
+ "phpstan": "2.3.5",
+ "level": 8,
+ "errors": [
+  {
+   "file": "chains.php",
+   "line": 33,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null"
+  },
+  {
+   "file": "chains.php",
+   "line": 33,
+   "identifier": "property.nonObject",
+   "message": "Cannot access property $n on NullsafeNullableChains\\Box|null."
+  },
+  {
+   "file": "chains.php",
+   "line": 34,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method count() on NullsafeNullableChains\\Box|null."
+  },
+  {
+   "file": "chains.php",
+   "line": 34,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null"
+  },
+  {
+   "file": "chains.php",
+   "line": 35,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null"
+  },
+  {
+   "file": "chains.php",
+   "line": 36,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null"
+  },
+  {
+   "file": "chains.php",
+   "line": 41,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int"
+  },
+  {
+   "file": "chains.php",
+   "line": 41,
+   "identifier": "property.nonObject",
+   "message": "Cannot access property $n on NullsafeNullableChains\\Box|null."
+  },
+  {
+   "file": "chains.php",
+   "line": 42,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method count() on NullsafeNullableChains\\Box|null."
+  },
+  {
+   "file": "chains.php",
+   "line": 42,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int"
+  },
+  {
+   "file": "chains.php",
+   "line": 47,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null"
+  },
+  {
+   "file": "chains.php",
+   "line": 48,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null"
+  }
+ ]
+}

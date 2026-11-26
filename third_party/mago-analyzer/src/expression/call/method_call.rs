@@ -511,7 +511,9 @@ where
             this_variable,
             encountered_mixed,
             is_null_safe && method_resolution.encountered_null,
-            artifacts.get_expression_type(object).is_some_and(|t| t.has_nullsafe_null()),
+            // MethodCallHandler::resolveReturnType()'s short circuit: the chain holds a `?->` and the receiver can be null
+            artifacts.get_expression_type(object).is_some_and(|t| t.has_nullsafe_null())
+                || crate::context::non_nullability::may_short_circuit(object, artifacts),
             is_null_safe,
             matches!(selector, ClassLikeMemberSelector::Identifier(_)),
         )?;

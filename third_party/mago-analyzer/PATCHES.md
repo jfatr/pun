@@ -4421,3 +4421,13 @@ and may return the type to use instead. Pun's mockery extension sets it to phpst
 TypeNodeResolverExtension, so `/** @var MockInterface|Foo $m */` is `MockInterface&Foo` as in PHPStan; property,
 parameter and return PHPDoc types are rewritten in the codebase instead. `crates/pun-analyse/tests/mockery.rs` (Probe.php
 line 93) covers it against PHPStan 2.3.5 with the extension.
+
+## Nullsafe short circuit through a nullable property
+
+`expression/access/property_access.rs` and `expression/call/method_call.rs`: PHPStan's PropertyFetchHandler and
+MethodCallHandler::resolveReturnType() add null to a fetch or call only when the chain holds a `?->` and the receiver
+can be null (`containsNullsafe() && containsNull($receiverType)`). A plain fetch on a nullable receiver
+(`$h->maybe->n`, `?Box $maybe`) now reads the property type without adding null (the error is still reported), and a
+fetch or call after a `?->` link on a nullable receiver (`$h?->maybe->n`, `$h?->maybe->count()`) adds the null and marks
+it nullsafe, which the receiver checks remove before reporting `Cannot access property $n on Box|null`
+(shipfastlabs/pun#92). `crates/pun-analyse/tests/nullsafe_nullable_chains.rs` covers it.

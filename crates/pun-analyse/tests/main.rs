@@ -142,6 +142,7 @@ mod never_calls;
 mod never_identity;
 mod nsrt;
 mod nullsafe_call_provenance;
+mod nullsafe_nullable_chains;
 mod nullsafe_scopes;
 mod object_intersections;
 mod offset_read_declaration_effects;

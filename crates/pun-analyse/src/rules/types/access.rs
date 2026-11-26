@@ -265,9 +265,13 @@ pub(in super::super) fn property_fetch(
     let name = String::from_utf8_lossy(id.value).into_owned();
     let property = format!("${name}");
     let property = property.as_bytes();
+    // as for a method call: a `?->` earlier in the chain removes only the null it may short-circuit to
+    let short_circuit = c.type_of(object).is_some_and(|t| t.has_nullsafe_null());
     let ty = c.phpstan_type(object).map(|t| {
-        if nullsafe || super::super::assign::contains_nullsafe(object) {
+        if nullsafe {
             super::receivers::non_null(t)
+        } else if short_circuit && super::super::assign::contains_nullsafe(object) {
+            t.remove_null()
         } else {
             t
         }

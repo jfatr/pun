@@ -190,7 +190,14 @@ where
                 Some(add_optional_union_type(get_mixed(), resulting_expression_type.as_ref(), context.codebase));
         }
 
-        if resolution_result.has_invalid_path || resolution_result.encountered_null {
+        // PropertyFetchHandler: a fetch on a null receiver reads the property type; null comes from a `?->` link,
+        // when the chain holds one and the receiver can be null.
+        let short_circuits =
+            !is_null_safe && crate::context::non_nullability::may_short_circuit(object, artifacts);
+        if resolution_result.has_invalid_path
+            || short_circuits
+            || (resolution_result.encountered_null && (is_null_safe || resulting_expression_type.is_none()))
+        {
             resulting_expression_type =
                 Some(add_optional_union_type(get_null(), resulting_expression_type.as_ref(), context.codebase));
         }
@@ -246,7 +253,8 @@ where
         }
     }
 
-    let object_has_nullsafe_null = artifacts.get_expression_type(object).is_some_and(|t| t.has_nullsafe_null());
+    let object_has_nullsafe_null = artifacts.get_expression_type(object).is_some_and(|t| t.has_nullsafe_null())
+        || (!is_null_safe && crate::context::non_nullability::may_short_circuit(object, artifacts));
     if resolution_result.all_properties_non_nullable
         && ((is_null_safe && resolution_result.encountered_null) || object_has_nullsafe_null)
     {
