@@ -281,7 +281,11 @@ impl At<'_, '_, '_> {
         let declared = declared_type(
             &TypeScope::new(self.ancestors, self.facts.documented()).map_hint(&hint.hint),
         );
-        if matches!(declared, Type::Mixed { .. } | Type::Never(_)) || declared.is_void().yes() {
+        // `self` and `parent` map to a never that accepts nothing (Rector's `SelfStaticType`), not the `never` type.
+        if matches!(declared, Type::Mixed { .. })
+            || matches!(declared, Type::Never(kind) if kind != NeverKind::NonAccepting)
+            || declared.is_void().yes()
+        {
             return true;
         }
         let values: Vec<&Expression<'_>> = match returns {

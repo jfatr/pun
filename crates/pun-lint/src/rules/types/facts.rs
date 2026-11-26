@@ -32,8 +32,8 @@ use mago_php_version::PHPVersion;
 use mago_prelude::Prelude;
 use mago_span::HasSpan;
 use mago_syntax::cst::{
-    Access, BinaryOperator, Call, ClassLikeConstantSelector, Expression, FunctionCall, Node,
-    Program, Sequence, Trivia, TriviaKind, UnaryPrefixOperator, Variable,
+    Access, BinaryOperator, Call, ClassLikeConstantSelector, ClassLikeMemberSelector, Expression,
+    FunctionCall, Node, Program, Sequence, Trivia, TriviaKind, UnaryPrefixOperator, Variable,
 };
 use mago_syntax::parser::parse_file;
 use rayon::prelude::*;
@@ -855,7 +855,25 @@ impl Facts {
                 else {
                     return;
                 };
-                if unknown(t) {
+                // PHPStan gives an enum's `name` and `value` properties a mixed native type
+                // (`PhpClassReflectionExtension::createProperty()`).
+                let property = match n {
+                    Node::PropertyAccess(a) => Some(&a.property),
+                    Node::NullSafePropertyAccess(a) => Some(&a.property),
+                    _ => None,
+                };
+                let enum_property = matches!(
+                    property,
+                    Some(ClassLikeMemberSelector::Identifier(id)) if matches!(id.value, b"name" | b"value")
+                ) && !t.types.is_empty()
+                    && t.types.iter().all(|t| match t {
+                        TAtomic::Object(TObject::Enum(_)) => true,
+                        TAtomic::Object(TObject::Named(object)) => (self.codebase)
+                            .get_class_like(object.name.as_bytes())
+                            .is_some_and(|c| c.kind.is_enum()),
+                        _ => false,
+                    });
+                if unknown(t) || enum_property {
                     untyped.insert((span.start.offset, span.end.offset));
                 }
             });
