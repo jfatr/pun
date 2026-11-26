@@ -35,3 +35,36 @@ fn a_trait_use_tag_binds_the_traits_templates_in_the_using_class() {
     got.sort();
     assert_eq!(got, want);
 }
+
+// `@use HoldsRows<Apple>` binds the trait's TRow in the type of a trait property too, so the invariant `Box<TRow>|null`
+// property is `Box<Apple>|null` in the using class (#93): PHPStan 2.3.5's errors on property.php at level 10
+#[test]
+fn a_trait_use_tag_binds_the_traits_templates_in_a_trait_property() {
+    let root =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/trait-property-templates");
+    let oracle: Value =
+        serde_json::from_slice(&std::fs::read(root.join("expected-phpstan.json")).unwrap())
+            .unwrap();
+    let mut want: Vec<_> = (oracle["errors"].as_array().unwrap().iter())
+        .map(|e| {
+            (
+                e["file"].as_str().unwrap().to_owned(),
+                e["line"].as_i64().unwrap(),
+                e["identifier"].as_str().unwrap().to_owned(),
+                e["message"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect();
+    let mut project = Project::new(vec![root.join("property.php")], Vec::new());
+    project.level = 10;
+    let prefix = format!("{}/", root.display());
+    let mut got: Vec<_> = (run(&project).unwrap().into_iter())
+        .map(|e| {
+            let file = e.file.strip_prefix(&prefix).unwrap_or(&e.file).to_owned();
+            (file, e.line, e.identifier, e.message)
+        })
+        .collect();
+    want.sort();
+    got.sort();
+    assert_eq!(got, want);
+}

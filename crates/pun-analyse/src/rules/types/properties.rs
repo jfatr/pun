@@ -385,6 +385,19 @@ fn find_on<'a>(
     } else {
         declared::property_of(c, declaring, meta, &f.name[1..])
     };
+    // PHPStan resolves a trait's property in the class using the trait, with the trait's templates as its `@use`
+    // tag gives them.
+    let (ty, scoped) = match importer.flatten() {
+        Some(importer) if !magic => {
+            let (names, args): (Vec<String>, Vec<Type>) =
+                declared::trait_templates(c, declaring, importer)
+                    .into_iter()
+                    .unzip();
+            let scope = format!("class {}", declared::original_name(declaring));
+            (with_args(&ty, &scope, &names, &args), importer)
+        }
+        _ => (ty, declaring),
+    };
     let mut display = c.display(importer.flatten().unwrap_or(declaring));
     let receiver_args = match &holder {
         Type::Object(_, args, _) | Type::Static(_, args) => Some(args.clone()),
@@ -397,15 +410,15 @@ fn find_on<'a>(
         _ => None,
     };
     let ty = if let Some(args) = receiver_args {
-        let scope = c.reflected_name(declaring.name.as_bytes());
-        let args = if class.name == declaring.name {
+        let scope = c.reflected_name(scoped.name.as_bytes());
+        let args = if class.name == scoped.name {
             args
         } else {
             pun_phpstan::symbols::lookup(&c.reflected_name(class.name.as_bytes()))
                 .and_then(|k| ancestor_args(&k, &scope, &args))
                 .unwrap_or_default()
         };
-        let templates = declared::class_templates(c, declaring);
+        let templates = declared::class_templates(c, scoped);
         let args: Vec<_> = templates
             .iter()
             .enumerate()

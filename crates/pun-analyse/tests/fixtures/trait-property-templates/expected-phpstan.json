@@ -1,0 +1,12 @@
+{
+ "phpstan": "2.3.5",
+ "level": 10,
+ "errors": [
+  {
+   "file": "property.php",
+   "line": 47,
+   "identifier": "assign.propertyType",
+   "message": "Property TraitPropertyTemplates\\Basket::$rows (TraitPropertyTemplates\\Box<TraitPropertyTemplates\\Apple>|null) does not accept TraitPropertyTemplates\\Box<TraitPropertyTemplates\\Pear>."
+  }
+ ]
+}
