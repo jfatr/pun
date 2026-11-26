@@ -911,7 +911,7 @@ fn phpstan_baseline_extensions_options_and_ignores() {
     );
 }
 
-/// rector.php read through Rector 2.8.4 (`.oracle/rector-bin`): its paths become `[lint] exclude` for the files
+/// rector.php read through Rector 2.9.2 (`.oracle/rector-bin`): its paths become `[lint] exclude` for the files
 /// outside them, a rule skipped for a path an override, and what Pun can't run is listed (a reason shared by more
 /// than three rules once, with the count).
 #[test]
@@ -998,6 +998,20 @@ fn rector_paths_skips_and_unsupported_rules() {
             Some(2)
         )
     );
+    // Rector 2.9.0 removed `withSetProviders()`; `vendor/bin/rector` fails on it the same way.
+    std::fs::write(
+        d.join("rector.php"),
+        "<?php\n\nuse Rector\\Config\\RectorConfig;\nuse RectorLaravel\\Set\\LaravelSetProvider;\n\nreturn RectorConfig::configure()\n    ->withSetProviders(LaravelSetProvider::class)\n    ->withPaths([__DIR__.'/src']);\n",
+    )
+    .unwrap();
+    let (_, err, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!(
+        (err.as_str(), code),
+        (
+            "x can't read rector.php with Rector: Call to undefined method Rector\\Configuration\\RectorConfigBuilder::withSetProviders() (Rector 2.9.2 has no such method, so `vendor/bin/rector` fails on this rector.php too)\n",
+            Some(2)
+        )
+    );
 }
 
 #[test]
@@ -1071,19 +1085,26 @@ fn leaves_composer_json_and_its_lock_alone() {
     assert!(err.contains("pun.toml exists and differs"), "{err}");
 }
 
-/// Rector prints "The per-version PHP set ... is deprecated" to stdout for each `SetList::PHP_8x` (2.8.4 in
-/// `.oracle/rector-bin`, and 2.8.5, the latest, alike); migrate reads its own JSON after the warnings.
+/// Rector prints "The per-version PHP set ... is deprecated" to stdout for each per-version set file (2.9.2 in
+/// `.oracle/rector-bin`, which removed the `SetList::PHP_8x` constants but keeps config/set/php8x.php); migrate reads
+/// its own JSON after the warnings.
 #[test]
 fn rector_warnings_on_stdout() {
     let Some(vendor) = oracle("rector-bin/vendor") else {
         return;
     };
-    let rector = "<?php\n\nuse Rector\\Config\\RectorConfig;\nuse Rector\\Set\\ValueObject\\SetList;\n\nreturn RectorConfig::configure()\n    ->withPaths([__DIR__.'/src'])\n    ->withSets([SetList::PHP_82, SetList::PHP_83, SetList::PHP_84]);\n";
+    let set = |v: &str| format!("__DIR__.'/vendor/rector/rector/config/set/php{v}.php'");
+    let rector = format!(
+        "<?php\n\nuse Rector\\Config\\RectorConfig;\n\nreturn RectorConfig::configure()\n    ->withPaths([__DIR__.'/src'])\n    ->withSets([{}, {}, {}]);\n",
+        set("82"),
+        set("83"),
+        set("84")
+    );
     let d = project(
         "rector-deprecated-sets",
         &[
             ("composer.json", "{\"require\":{\"php\":\"^8.4\"}}"),
-            ("rector.php", rector),
+            ("rector.php", &rector),
             ("src/a.php", "<?php\n"),
         ],
     );
@@ -1135,9 +1156,10 @@ fn rector_settings_without_an_equivalent_are_listed() {
     assert!(!out.contains("withIndent()"), "{out}");
 }
 
-/// The PHP 8.2 set read through Rector 2.8.4 (`.oracle/rector-bin`): `SetList::PHP_82` lists the set's four rules
-/// (`rector list-rules`), which become `[lint.rules]`, and `->withPhpSets(php82: true)` the `modernize` set, which
-/// runs them. `pun lint --fix` then writes what `rector process` with `SetList::PHP_82` wrote for the same file.
+/// The PHP 8.2 set read through Rector 2.9.2 (`.oracle/rector-bin`): config/set/php82.php (2.9.0 removed its
+/// `SetList::PHP_82` constant) lists the set's four rules (`rector list-rules`), which become `[lint.rules]`, and
+/// `->withPhpSets(php82: true)` the `modernize` set, which runs them. `pun lint --fix` then writes what
+/// `rector process` with that set file wrote for the same file.
 #[test]
 fn rector_php82_set_turns_on_the_php_8_2_rules() {
     let Some(vendor) = oracle("rector-bin/vendor") else {
@@ -1148,7 +1170,7 @@ fn rector_php82_set_turns_on_the_php_8_2_rules() {
     for (name, config, summary) in [
         (
             "rector-php82-set-list",
-            "use Rector\\Set\\ValueObject\\SetList;\n\nreturn RectorConfig::configure()\n    ->withPaths([__DIR__.'/src'])\n    ->withSets([SetList::PHP_82]);\n",
+            "\nreturn RectorConfig::configure()\n    ->withPaths([__DIR__.'/src'])\n    ->withSets([__DIR__.'/vendor/rector/rector/config/set/php82.php']);\n",
             " ok rector.php  -> [lint] N on, N off",
         ),
         (
