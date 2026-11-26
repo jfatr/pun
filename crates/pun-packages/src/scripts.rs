@@ -204,8 +204,10 @@ impl Runner {
             self.root_binary(&callable, with_args(&callable))
         };
         self.announce(event, &with_args(&callable));
-        // `/bin/sh`, as Symfony's Process starts it for Composer: the child's PATH puts the bin dir first.
+        // `/bin/sh`, as Symfony's Process starts it for Composer: the child's PATH puts the bin dir first. PHP's
+        // proc_open names it `sh` (`execl("/bin/sh", "sh", "-c", ...)`), which the shell's own errors start with.
         let mut command = self.command("/bin/sh");
+        std::os::unix::process::CommandExt::arg0(&mut command, "sh");
         let status = wait(command.arg("-c").arg(&exec), &exec, self.timeout)?;
         failed(&callable, event, status)
     }
