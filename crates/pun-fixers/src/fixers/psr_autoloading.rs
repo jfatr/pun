@@ -154,6 +154,7 @@ impl Fixer for PsrAutoloadingFixer {
 
 /// Not in PHP-CS-Fixer: whether the file names the class it declares at `index` anywhere else
 /// (`Foo::class`, `new Foo`, a type). Renaming only the declaration would leave those names dangling.
+/// The name of `namespace Foo;` is not a use of the class.
 fn names_class(tokens: &Tokens, index: usize) -> bool {
     let name = tokens[index].get_content();
     (0..tokens.count()).any(|i| {
@@ -167,6 +168,7 @@ fn names_class(tokens: &Tokens, index: usize) -> bool {
                     T_DOUBLE_COLON,
                     T_FUNCTION,
                     T_CONST,
+                    T_NAMESPACE,
                 ])
             })
     })
@@ -253,6 +255,13 @@ mod tests {
             fix(&dir, "<?php\n\nfinal class PreventStraySaloonSends\n{\n    public function x() { $this->PreventStraySaloonSends(); }\n}\n"),
             "<?php\n\nfinal class Pest\n{\n    public function x() { $this->PreventStraySaloonSends(); }\n}\n"
         );
+        // Pint 1.32.1's output: the name of a namespace with the class's name is not a use of the class.
+        assert_eq!(
+            fix(&dir, "<?php namespace B;\nfinal class B {}\n"),
+            "<?php namespace B;\nfinal class Pest {}\n"
+        );
+        let used = "<?php namespace B;\nfinal class B {}\nnew B;\n";
+        assert_eq!(fix(&dir, used), used);
         std::fs::remove_dir_all(&dir).unwrap();
     }
 
