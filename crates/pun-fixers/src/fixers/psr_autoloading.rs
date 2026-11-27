@@ -154,13 +154,14 @@ impl Fixer for PsrAutoloadingFixer {
 
 /// Not in PHP-CS-Fixer: whether the file names the class it declares at `index` anywhere else
 /// (`Foo::class`, `new Foo`, a type). Renaming only the declaration would leave those names dangling.
-/// The name of `namespace Foo;` is not a use of the class.
+/// A segment of a namespace declaration's name (`namespace App\Foo;`) is not a use of the class.
 fn names_class(tokens: &Tokens, index: usize) -> bool {
     let name = tokens[index].get_content();
     (0..tokens.count()).any(|i| {
         i != index
             && tokens[i].is_kind(T_STRING)
             && tokens[i].get_content().eq_ignore_ascii_case(name)
+            && !in_namespace_name(tokens, i)
             && tokens.get_prev_meaningful_token(i).is_none_or(|p| {
                 !tokens[p].is_given_kind(&[
                     T_OBJECT_OPERATOR,
@@ -168,10 +169,22 @@ fn names_class(tokens: &Tokens, index: usize) -> bool {
                     T_DOUBLE_COLON,
                     T_FUNCTION,
                     T_CONST,
-                    T_NAMESPACE,
                 ])
             })
     })
+}
+
+/// Whether the name part at `index` belongs to the name of a `namespace` declaration: the chain of
+/// name parts and separators before it starts right after `namespace`. A relative name
+/// (`namespace\Foo`) reaches here as `CT_NAMESPACE_OPERATOR`, so it stays a use.
+fn in_namespace_name(tokens: &Tokens, index: usize) -> bool {
+    tokens
+        .get_token_not_of_kinds_sibling(
+            index,
+            -1,
+            &[T_STRING, T_NS_SEPARATOR, T_WHITESPACE, T_COMMENT, T_DOC_COMMENT],
+        )
+        .is_some_and(|p| tokens[p].is_kind(T_NAMESPACE))
 }
 
 impl PsrAutoloadingFixer {
@@ -262,6 +275,12 @@ mod tests {
         );
         let used = "<?php namespace B;\nfinal class B {}\nnew B;\n";
         assert_eq!(fix(&dir, used), used);
+        // Pun's own behavior (Pint renames these and leaves the reference dangling): a use inside a
+        // braced namespace body, and a relative name, still keep the class name.
+        let braced = "<?php namespace App { final class B {} echo B::class; }";
+        assert_eq!(fix(&dir, braced), braced);
+        let relative = "<?php final class B {}\nnew namespace\\B;\n";
+        assert_eq!(fix(&dir, relative), relative);
         std::fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -274,5 +293,17 @@ mod tests {
         // `éXPest` (7 bytes), which start inside `é`.
         assert_eq!(fix(&dir, "<?php final class éXPest {}"), "<?php final class Pest {}");
         std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn renames_a_class_named_like_the_last_segment_of_its_namespace() {
+        let dir = std::env::temp_dir().join(format!("pun-psr-autoloading-qns-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        // Pint 1.32.1's output: a segment of a qualified namespace name is not a use of the class.
+        assert_eq!(
+            fix(&dir, "<?php namespace App\\B;\nfinal class B {}\n"),
+            "<?php namespace App\\B;\nfinal class Pest {}\n"
+        );
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 }
