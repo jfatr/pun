@@ -514,6 +514,10 @@ pub(super) fn read(c: &mut Checker, p: &PropertyAccess) {
         );
     }
     if c.property_access.assigned.contains(&key(p.span())) {
+        // AccessPropertiesCheck reports an unknown class before it skips a fetch being assigned
+        if this_name(p).is_none() {
+            super::types::property_fetch(c, p.span(), p.object, &p.property, false, None);
+        }
         return;
     }
     check(c, p, false);
@@ -653,7 +657,7 @@ fn is_universal_object_crate(c: &Checker, k: &ClassLikeMetadata) -> bool {
 fn check(c: &mut Checker, p: &PropertyAccess, write: bool) {
     let Some(name) = this_name(p) else {
         let allowed = !write && c.property_access.allowed.contains(&key(p.span()));
-        super::types::property_fetch(c, p.span(), p.object, &p.property, false, allowed);
+        super::types::property_fetch(c, p.span(), p.object, &p.property, false, Some(allowed));
         return;
     };
     if !c.property_access.this.last().unwrap_or(false) {
@@ -760,7 +764,7 @@ pub(super) fn null_safe_read(c: &mut Checker, p: &NullSafePropertyAccess) {
         );
     }
     let allowed = c.property_access.allowed.contains(&key(p.span()));
-    super::types::property_fetch(c, p.span(), p.object, &p.property, true, allowed);
+    super::types::property_fetch(c, p.span(), p.object, &p.property, true, Some(allowed));
 }
 
 pub(super) fn static_read(c: &mut Checker, p: &StaticPropertyAccess) {

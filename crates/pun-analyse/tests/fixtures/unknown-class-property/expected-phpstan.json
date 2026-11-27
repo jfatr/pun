@@ -1,0 +1,71 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 11,
+   "identifier": "function.notFound",
+   "message": "Function get_post not found.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  },
+  {
+   "line": 13,
+   "identifier": "class.notFound",
+   "message": "Access to property $post_status on an unknown class WP_Post.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  },
+  {
+   "line": 13,
+   "identifier": "class.notFound",
+   "message": "Class WP_Post not found.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  },
+  {
+   "line": 22,
+   "identifier": "class.notFound",
+   "message": "Class Missing not found.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  },
+  {
+   "line": 23,
+   "identifier": "class.notFound",
+   "message": "Access to property $status on an unknown class Missing.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  },
+  {
+   "line": 23,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: *ERROR*",
+   "tip": null
+  },
+  {
+   "line": 24,
+   "identifier": "class.notFound",
+   "message": "Access to property $status on an unknown class Missing.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  },
+  {
+   "line": 24,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: *ERROR*",
+   "tip": null
+  },
+  {
+   "line": 24,
+   "identifier": "nullsafe.neverNull",
+   "message": "Using nullsafe property access on non-nullable type Missing. Use -> instead.",
+   "tip": null
+  },
+  {
+   "line": 25,
+   "identifier": "class.notFound",
+   "message": "Access to property $status on an unknown class Missing.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  },
+  {
+   "line": 25,
+   "identifier": "class.notFound",
+   "message": "Access to property $status on an unknown class Missing.",
+   "tip": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+  }
+ ]
+}

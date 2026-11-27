@@ -16,7 +16,7 @@ Run `pun migrate --from phpstan`. It follows the config's includes. That covers 
 | `level: 5` | `[analyse] preset = "phpstan/level_5"`, which runs exactly PHPStan's level 5 |
 | `level: 0..10`, `level: max` | `preset = "phpstan/level_<n>"` or `"phpstan/level_max"`, with on/off lines only for what the config changes, such as opt-in checks or strict-rules. `--offer-preset` offers Pun's closest preset instead |
 | `paths`, `excludePaths`, `stubFiles` | `[analyse] paths`, `exclude`, `stubs` |
-| `scanFiles`, `scanDirectories`, `bootstrapFiles` | `[analyse] scan` and `bootstrap`. Files under `vendor/` come back with their extension and aren't copied |
+| `scanFiles`, `scanDirectories`, `bootstrapFiles` | `[analyse] scan` and `bootstrap`. Files of a built-in extension, such as Larastan's, come with the extension and aren't copied. Other `vendor/` files, such as `php-stubs/wordpress-stubs`, are copied, in `stubs` too |
 | `ignoreErrors` identifiers, patterns, paths, count, `reportUnmatched` | `[[analyse.ignore]]` with Pun `rule`, original `identifier`, `message`, `paths`, `count`, `report-unmatched` |
 | `reportUnmatchedIgnoredErrors: false` | `[analyse] report-unmatched = false`, and `report-unmatched = false` on each entry that doesn't set `reportUnmatched` |
 | Changed rule parameters | Kebab-case options on each running rule that reads the parameter |

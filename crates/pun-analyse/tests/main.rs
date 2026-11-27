@@ -219,6 +219,7 @@ mod trait_use_templates;
 mod try_certainty;
 mod type_coverage;
 mod undefined_offset_writes;
+mod unknown_class_property;
 mod unmatched_catch_observation;
 mod unmatched_ignores;
 mod unpacked_appends;

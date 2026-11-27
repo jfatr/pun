@@ -4568,3 +4568,14 @@ on a `SoapClient` or a subclass, returns an explicit `mixed` instead of adding n
 reflects every method of such a class as public, not static, variadic and returning `mixed` (shipfastlabs/pun#141);
 a user class's `__call()` still gives no method. Pun's `rules/class_reflection.rs` `SoapClientMethods` makes the
 method exist for `method.notFound`. `crates/pun-analyse/tests/soap_client.rs` covers it against PHPStan 2.3.5.
+
+## Properties of an unknown class
+
+`resolver/property.rs` `find_property_in_class()`: a property fetch on an object of an unknown class reads as
+`ErrorType`, not `null`. The resolver returned no property, so the fetch took the invalid-path `null`, and after
+`if (! $post instanceof \WP_Post || 'publish' !== $post->post_status) { return; }` with `WP_Post` unknown the
+comparison was always true and the rest of the file unreachable (shipfastlabs/pun#144). PHPStan's
+[`PropertyFetchHandler`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/ExprHandler/PropertyFetchHandler.php#L167)
+finds no property reflection on an unknown class and gives `ErrorType`. Pun's `rules/types/access.rs`
+`property_fetch()` reports `Access to property $x on an unknown class X.`, as PHPStan's `AccessPropertiesCheck` does.
+`crates/pun-analyse/tests/unknown_class_property.rs` covers it against PHPStan 2.3.5 at level max.

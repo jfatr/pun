@@ -58,7 +58,6 @@ parameters:
         - stubs/Foo.stub
     scanFiles:
         - stubs/debugbar.php
-        - vendor/foo/bar/scanned.php
     scanDirectories:
         - app/Legacy
     bootstrapFiles:
@@ -147,6 +146,24 @@ final class GeneratedConfig
 }
 ";
 
+/// Issue #144: PHPStan reads stubFiles and scanFiles under vendor/, such as php-stubs/wordpress-stubs, so they are
+/// migrated; a built-in extension's own (Larastan's) come back with the extension.
+#[test]
+fn migrates_vendor_stubs_but_not_a_built_in_extensions() {
+    let neon = "includes:\n    - vendor/larastan/larastan/extension.neon\nparameters:\n    level: 5\n    stubFiles:\n        - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php\n    scanFiles:\n        - vendor/php-stubs/acf-pro-stubs/acf-pro-stubs.php\n";
+    let larastan = "parameters:\n    stubFiles:\n        - stubs/Model.stub\n    scanFiles:\n        - stubs/Helpers.php\n";
+    let d = project(
+        neon,
+        &[("vendor/larastan/larastan/extension.neon", larastan)],
+    );
+    let p = from_phpstan(&d, &d.join("phpstan.neon")).unwrap();
+    assert_eq!(
+        p.stubs,
+        ["vendor/php-stubs/wordpress-stubs/wordpress-stubs.php"]
+    );
+    assert_eq!(p.scan, ["vendor/php-stubs/acf-pro-stubs/acf-pro-stubs.php"]);
+}
+
 #[test]
 fn reads_level_paths_ignores_and_includes() {
     let d = project(
@@ -177,7 +194,6 @@ fn reads_level_paths_ignores_and_includes() {
     assert_eq!(p.paths, ["app", "tests"]);
     assert_eq!(p.exclude, ["app/Legacy", "/tmp"]);
     assert_eq!(p.stubs, ["stubs/Foo.stub"]);
-    // the scanned and bootstrap files outside vendor (an extension's come with the extension)
     assert_eq!(p.scan, ["stubs/debugbar.php", "app/Legacy"]);
     assert_eq!(p.bootstrap, ["tests/bootstrap.php"]);
     assert_eq!(p.baselines, ["phpstan-baseline.neon"]);

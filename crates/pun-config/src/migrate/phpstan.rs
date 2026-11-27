@@ -259,12 +259,14 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
         .map(|(n, _)| format!("{n}_type"))
         .collect();
     out.changed.retain(|(n, _)| !aliased.contains(n));
-    // the project's own files: an extension's (in vendor or the phar) come back with the extension
+    // the project's own files, vendor stubs such as php-stubs/wordpress-stubs included: a built-in extension's (in
+    // its package or the phar) come back with the extension
     let own = |names: &[&str]| -> Vec<String> {
         (names.iter())
             .flat_map(|n| strings(p.get_str(n)))
-            .filter(|s| !s.starts_with("phar://") && !s.contains("/vendor/"))
+            .filter(|s| !s.starts_with("phar://"))
             .map(|s| relative(root, &s))
+            .filter(|s| !package(s).is_some_and(|pkg| BUILT_IN.iter().any(|b| b.0 == pkg)))
             .collect()
     };
     out.stubs = own(&["stubFiles"]);

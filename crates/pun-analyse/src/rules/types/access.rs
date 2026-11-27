@@ -254,7 +254,8 @@ pub(in super::super) fn property_fetch(
     object: &Expression,
     selector: &ClassLikeMemberSelector,
     nullsafe: bool,
-    allowed: bool,
+    // `None` for a fetch being assigned: only its unknown classes are reported
+    allowed: Option<bool>,
 ) {
     if !c.checks_expression(object) || !nullsafe && is_this(object) {
         return;
@@ -276,15 +277,31 @@ pub(in super::super) fn property_fetch(
             t
         }
     });
+    let mut unknown = Vec::new();
     let found = {
         let c = &*c;
-        c.find_type_to_check_of(ty, &|t| {
-            c.can_access_properties(t).yes()
-                && (c.has_property(t, property, false).yes()
-                    || c.has_property(t, property, true).yes())
+        ty.and_then(|ty| {
+            c.find_in(
+                c.levels(),
+                ty,
+                &|t| {
+                    c.can_access_properties(t).yes()
+                        && (c.has_property(t, property, false).yes()
+                            || c.has_property(t, property, true).yes())
+                },
+                Some(&mut unknown),
+            )
         })
     };
-    let Some(t) = found else {
+    for class in unknown {
+        c.report(
+            span,
+            "class.notFound",
+            format!("Access to property ${name} on an unknown class {class}."),
+            Some(super::super::DISCOVERING_SYMBOLS_TIP),
+        );
+    }
+    let (Some(t), Some(allowed)) = (found, allowed) else {
         return;
     };
     let describe = |c: &Checker, t: &Type| {

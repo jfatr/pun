@@ -916,7 +916,16 @@ where
     let Some(class_metadata) = context.codebase.get_class_like(class_id.as_bytes()) else {
         report_non_existent_class_like(context, object_expr.span(), class_id);
 
-        return None;
+        // PHPStan reads a property of an unknown class as `ErrorType`, not `null`.
+        return Some(ResolvedProperty {
+            property_name: prop_name,
+            lookup_class: None,
+            declaring_class_id: None,
+            property_span: None,
+            property_type: get_error(),
+            is_magic: false,
+            read_type: None,
+        });
     };
 
     let resolution = resolve_declared_property(
