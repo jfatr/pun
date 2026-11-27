@@ -1,3 +1,4 @@
+mod aggregate_iterators;
 mod allowed_constants;
 mod anonymous_subtypes;
 mod argument_contracts;
