@@ -4543,3 +4543,14 @@ those, PHPStan's ObjectType::isSuperTypeOf() does not) is the intersection of bo
 `instanceof Seoable`, an interface requiring `Model`, is `Model&Seoable`, not `Seoable` alone, in either direction
 (shipfastlabs/pun#137). `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunRequireExtendsNarrowingTest.json`
 covers it against PHPStan 2.3.7 with Larastan 3.15.0.
+## The root of a nullsafe isset path
+
+`reconciler/mod.rs` `reconcile_keyed_types()`: the absence check of an isset or `!isset` assertion reads the root
+variable of a nullsafe path without its `?`. The path splitter cuts `$item?->names` into `$item?` and `->names`, and
+`$item?` is never defined, so after `if (empty($item?->names)) return;` the continuing edge was marked impossible
+and the join after the `if` dropped every variable, parameters included (shipfastlabs/pun#140). PHPStan's
+IssetHandler specifies `$item` itself. `formula.rs` `negate_or_synthesize()`: the negation of an `empty()` condition
+gets the access's base clauses, as `get_formula()` already gives a `!empty()`, so the continuing edge has `$item`
+an `Item` and `$item->names` a `non-empty-list<string>`, not `Item|null` and `list<string>`.
+`crates/pun-analyse/tests/nullsafe_empty.rs` covers `empty()` and `!isset()` on a nullsafe property against PHPStan
+2.3.5.

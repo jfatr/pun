@@ -1509,6 +1509,19 @@ where
                 formula_size_threshold,
             );
 
+            // Pun: a false `empty($x?->p)` is the `!empty()` that get_formula() gives the access's bases, so its
+            // object is not null and the nullsafe holder is the plain access, as IssetHandler specifies them.
+            if let Expression::Construct(Construct::Empty(empty)) = unwrap_expression(conditional) {
+                add_access_base_clauses(
+                    empty.value,
+                    &mut negated_clauses,
+                    conditional.span(),
+                    conditional.span(),
+                    assertion_context,
+                    artifacts,
+                );
+            }
+
             negated_clauses
         }
         None => match get_formula(

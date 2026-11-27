@@ -157,6 +157,7 @@ mod never_calls;
 mod never_identity;
 mod nsrt;
 mod nullsafe_call_provenance;
+mod nullsafe_empty;
 mod nullsafe_nullable_chains;
 mod nullsafe_offset_chains;
 mod nullsafe_scopes;
