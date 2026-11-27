@@ -4,7 +4,9 @@ use crate::analyzers::preg::Preg;
 use anyhow::{Result, bail};
 use pun_format::Fixer;
 use pun_tokens::Kind::*;
-use pun_tokens::php_compat::strtolower;
+use pun_tokens::php_compat::{
+    explode, ltrim_chars, rtrim_chars, str_replace, strtolower, substr, trim,
+};
 use pun_tokens::tokens_analyzer::TokensAnalyzer;
 use pun_tokens::{Token, Tokens};
 use serde_json::Value;
@@ -28,11 +30,8 @@ fn dirname(path: &str) -> &str {
     &path[..path.rfind('/').unwrap().max(1)]
 }
 
-fn substr_from(s: &str, start: usize) -> &str {
-    s.get(start..).unwrap_or("")
-}
-
-fn substr_tail(s: &str, len: usize) -> &str {
+/// PHP's `substr($s, -$len)`: the last `len` bytes, or all of `s` when it is shorter.
+fn substr_tail(s: &[u8], len: usize) -> &[u8] {
     &s[s.len().saturating_sub(len)..]
 }
 
@@ -94,7 +93,7 @@ impl Fixer for PsrAutoloadingFixer {
         {
             return;
         }
-        let mut namespace: Option<(String, usize, usize)> = None;
+        let mut namespace: Option<(Vec<u8>, usize, usize)> = None;
         let mut classy: Option<(Vec<u8>, usize)> = None;
         for index in 0..tokens.count() {
             if tokens[index].is_kind(T_NAMESPACE) {
@@ -106,10 +105,7 @@ impl Fixer for PsrAutoloadingFixer {
                     .get_next_token_of_kind(start, &[";".into()], true)
                     .unwrap();
                 let code = tokens.generate_partial_code(start, end - 1);
-                let name = String::from_utf8_lossy(&code)
-                    .trim_matches(TRIM)
-                    .to_string();
-                namespace = Some((name, start, end));
+                namespace = Some((trim(&code).to_vec(), start, end));
             } else if tokens[index].is_classy() {
                 if TokensAnalyzer::new(tokens).is_anonymous_class(index) {
                     continue;
@@ -124,10 +120,9 @@ impl Fixer for PsrAutoloadingFixer {
         let Some((classy_name, classy_index)) = classy else {
             return;
         };
-        let ns = namespace.as_ref().map(|(n, _, _)| n.as_str());
-        let expected =
-            self.calculate_classy_name(&real, file, ns, &String::from_utf8_lossy(&classy_name));
-        if classy_name != expected.as_bytes() && !names_class(tokens, classy_index) {
+        let ns = namespace.as_ref().map(|(n, _, _)| n.as_slice());
+        let expected = self.calculate_classy_name(&real, file, ns, &classy_name);
+        if classy_name != expected && !names_class(tokens, classy_index) {
             tokens.set(classy_index, Token::new(T_STRING, expected));
         }
         let (Some(dir), Some((namespace, start, end))) = (&self.dir, namespace) else {
@@ -140,19 +135,16 @@ impl Fixer for PsrAutoloadingFixer {
         if dir.len() >= file_dir.len() {
             return;
         }
-        let new_namespace = substr_from(&file_dir.replace('/', "\\"), dir.len() + 1).to_string();
+        let file_dir = str_replace(b"/", b"\\", file_dir.as_bytes());
+        let new_namespace = substr(&file_dir, dir.len() + 1, None);
         let original_namespace = substr_tail(&namespace, new_namespace.len());
         if original_namespace != new_namespace
-            && original_namespace.eq_ignore_ascii_case(&new_namespace)
+            && original_namespace.eq_ignore_ascii_case(new_namespace)
         {
             tokens.clear_range(start, end);
-            let namespace = format!(
-                "{}{}",
-                &namespace[..namespace.len() - new_namespace.len()],
-                new_namespace
-            );
-            let mut new_tokens =
-                Tokens::from_code(format!("<?php namespace {namespace};").as_bytes());
+            let prefix = &namespace[..namespace.len() - original_namespace.len()];
+            let code = [b"<?php namespace ", prefix, new_namespace, b";"].concat();
+            let mut new_tokens = Tokens::from_code(&code);
             new_tokens.clear_range(0, 2);
             new_tokens.clear_empty_tokens();
             tokens.insert_at(start, new_tokens.iter().cloned().collect());
@@ -180,29 +172,27 @@ fn names_class(tokens: &Tokens, index: usize) -> bool {
     })
 }
 
-const TRIM: &[char] = &[' ', '\t', '\n', '\r', '\0', '\x0B'];
-
 impl PsrAutoloadingFixer {
     fn calculate_classy_name(
         &self,
         real: &str,
         file: &Path,
-        namespace: Option<&str>,
-        current_name: &str,
-    ) -> String {
-        let mut name = basename_php(file);
+        namespace: Option<&[u8]>,
+        current_name: &[u8],
+    ) -> Vec<u8> {
+        let mut name = basename_php(file).into_bytes();
         let max_namespace = self.calculate_max_namespace(real, namespace);
         if self.dir.is_some() {
             return if max_namespace.is_empty() {
                 name
             } else {
-                format!("{}_{name}", max_namespace.replace('\\', "_"))
+                [str_replace(b"\\", b"_", &max_namespace).as_slice(), b"_", &name].concat()
             };
         }
-        for namespace_part in max_namespace.split('\\').rev() {
-            let name_candidate = format!("{namespace_part}_{name}");
+        for namespace_part in explode(b"\\", &max_namespace).into_iter().rev() {
+            let name_candidate = [namespace_part, b"_", &name].concat();
             let tail = substr_tail(current_name, name_candidate.len());
-            if strtolower(name_candidate.as_bytes()) != strtolower(tail.as_bytes()) {
+            if strtolower(&name_candidate) != strtolower(tail) {
                 break;
             }
             name = name_candidate;
@@ -210,32 +200,31 @@ impl PsrAutoloadingFixer {
         name
     }
 
-    fn calculate_max_namespace(&self, real: &str, namespace: Option<&str>) -> String {
+    fn calculate_max_namespace(&self, real: &str, namespace: Option<&[u8]>) -> Vec<u8> {
         let root = match &self.dir {
             None => "/".to_string(),
             Some(dir) => dir.clone(),
         };
-        let location = substr_from(dirname(real), root.len())
-            .replace('/', "\\")
-            .trim_matches('\\')
-            .to_string();
+        let location = str_replace(b"/", b"\\", substr(dirname(real).as_bytes(), root.len(), None));
+        let location = ltrim_chars(rtrim_chars(&location, b"\\"), b"\\");
         let Some(namespace) = namespace else {
-            return location;
+            return location.to_vec();
         };
-        let mut location_parts_reversed: Vec<&str> = location.split('\\').rev().collect();
+        let mut location_parts_reversed = explode(b"\\", location);
+        location_parts_reversed.reverse();
         let mut removed = 0;
-        for (key, namespace_part) in namespace.split('\\').rev().enumerate() {
+        for (key, namespace_part) in explode(b"\\", namespace).into_iter().rev().enumerate() {
             let Some(part) = location_parts_reversed.get(key) else {
                 break;
             };
-            if strtolower(namespace_part.as_bytes()) != strtolower(part.as_bytes()) {
+            if strtolower(namespace_part) != strtolower(part) {
                 break;
             }
             removed = key + 1;
         }
         location_parts_reversed.drain(..removed);
         location_parts_reversed.reverse();
-        location_parts_reversed.join("\\")
+        location_parts_reversed.join(&b'\\')
     }
 }
 
@@ -265,5 +254,16 @@ mod tests {
             "<?php\n\nfinal class Pest\n{\n    public function x() { $this->PreventStraySaloonSends(); }\n}\n"
         );
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn compares_multibyte_class_names_by_bytes() {
+        let root = std::env::temp_dir().join(format!("pun-psr-autoloading-mb-{}", std::process::id()));
+        let dir = root.join("a");
+        std::fs::create_dir_all(&dir).unwrap();
+        // Pint 1.32.1's output for `a/Pest.php`: PHP compares the last `strlen("a_Pest")` = 6 bytes of
+        // `éXPest` (7 bytes), which start inside `é`.
+        assert_eq!(fix(&dir, "<?php final class éXPest {}"), "<?php final class Pest {}");
+        std::fs::remove_dir_all(&root).unwrap();
     }
 }
