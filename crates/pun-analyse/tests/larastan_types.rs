@@ -99,6 +99,9 @@
 //! Type/PunRelationWhereHasTest.json (an untyped closure parameter of `whereHas()` and its kin forwarded by a relation,
 //! the stub's `$relation is string` conditional resolved from the argument) has its assertions from PHPStan 2.3.7 with
 //! Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunRequireExtendsNarrowingTest.json (a model narrowed by `instanceof` on an interface with
+//! `@phpstan-require-extends Model`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel
+//! 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

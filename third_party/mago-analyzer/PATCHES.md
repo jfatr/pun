@@ -4535,3 +4535,11 @@ trait, also while it is analysed in the context of a using class), `instanceof` 
 so Pun reported `instanceof.alwaysTrue`, `instanceof.alwaysFalse` and `booleanOr.alwaysTrue` where PHPStan reports
 nothing (shipfastlabs/pun#134). Narrowing by the check is unchanged. `crates/pun-analyse/tests/fixtures/coverage/trait-this-instanceof`
 covers it against PHPStan 2.3.5.
+## Instanceof narrowing by an interface that requires the class
+
+`reconciler/assertion_reconciler.rs` `intersect_atomic_with_atomic()`: a named object narrowed by another that is its
+instance only through `@phpstan-require-extends` / `@phpstan-require-implements` (Mago's `is_instance_of()` counts
+those, PHPStan's ObjectType::isSuperTypeOf() does not) is the intersection of both, so `Model $record` narrowed by
+`instanceof Seoable`, an interface requiring `Model`, is `Model&Seoable`, not `Seoable` alone, in either direction
+(shipfastlabs/pun#137). `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunRequireExtendsNarrowingTest.json`
+covers it against PHPStan 2.3.7 with Larastan 3.15.0.
