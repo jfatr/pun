@@ -4501,6 +4501,7 @@ array by reference only to move its internal pointer. PHPStan's function map mar
 (PassedByReference::readsArgument()), so ArgumentsHandler writes nothing back and the array keeps its type; Mago
 widened a `non-empty-list<string>` back to `list<string>` after `end($columns)` (shipfastlabs/pun#126). `crates/pun-analyse/tests/array_pointer_functions.rs`
 covers it against PHPStan 2.3.5.
+
 ## Offsets of a nullsafe chain keep its short-circuit null
 
 `expression/array_access.rs`: reading an offset of a value whose `null` comes only from a nullsafe short-circuit
@@ -4509,6 +4510,7 @@ type is non-nullable, so the next `->` link skips it as PHPStan's chain does; Ma
 nullable (shipfastlabs/pun#129). An
 array whose values may be null still reports. `crates/pun-analyse/tests/nullsafe_offset_chains.rs` covers both against
 PHPStan 2.3.5.
+
 ## array_find() narrows through its callback
 
 `invocation/array_filter.rs`: the array_filter() helper also serves `array_find()`, as PHPStan's
@@ -4535,6 +4537,7 @@ trait, also while it is analysed in the context of a using class), `instanceof` 
 so Pun reported `instanceof.alwaysTrue`, `instanceof.alwaysFalse` and `booleanOr.alwaysTrue` where PHPStan reports
 nothing (shipfastlabs/pun#134). Narrowing by the check is unchanged. `crates/pun-analyse/tests/fixtures/coverage/trait-this-instanceof`
 covers it against PHPStan 2.3.5.
+
 ## Instanceof narrowing by an interface that requires the class
 
 `reconciler/assertion_reconciler.rs` `intersect_atomic_with_atomic()`: a named object narrowed by another that is its
@@ -4543,6 +4546,7 @@ those, PHPStan's ObjectType::isSuperTypeOf() does not) is the intersection of bo
 `instanceof Seoable`, an interface requiring `Model`, is `Model&Seoable`, not `Seoable` alone, in either direction
 (shipfastlabs/pun#137). `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunRequireExtendsNarrowingTest.json`
 covers it against PHPStan 2.3.7 with Larastan 3.15.0.
+
 ## The root of a nullsafe isset path
 
 `reconciler/mod.rs` `reconcile_keyed_types()`: the absence check of an isset or `!isset` assertion reads the root
@@ -4554,3 +4558,13 @@ gets the access's base clauses, as `get_formula()` already gives a `!empty()`, s
 an `Item` and `$item->names` a `non-empty-list<string>`, not `Item|null` and `list<string>`.
 `crates/pun-analyse/tests/nullsafe_empty.rs` covers `empty()` and `!isset()` on a nullsafe property against PHPStan
 2.3.5.
+
+## Every method of a `SoapClient`
+
+`expression/call/method_call.rs` `analyze_undocumented_method_return_type()`: a call that only `__call()` handles,
+on a `SoapClient` or a subclass, returns an explicit `mixed` instead of adding nothing to the call's type (an
+`ErrorType`). PHPStan's
+[`SoapClientMethodsClassReflectionExtension`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Reflection/Php/Soap/SoapClientMethodReflection.php)
+reflects every method of such a class as public, not static, variadic and returning `mixed` (shipfastlabs/pun#141);
+a user class's `__call()` still gives no method. Pun's `rules/class_reflection.rs` `SoapClientMethods` makes the
+method exist for `method.notFound`. `crates/pun-analyse/tests/soap_client.rs` covers it against PHPStan 2.3.5.

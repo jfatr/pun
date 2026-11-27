@@ -195,6 +195,7 @@ mod shape_discrimination;
 mod shebang;
 mod signatures;
 mod single_call_arguments;
+mod soap_client;
 mod source_aliases;
 mod sprintf_literal_strings;
 mod statements;
