@@ -4525,3 +4525,13 @@ special-function assertions whenever a provider returned any. `formula.rs`: `!in
 name several variables becomes the negated formula of those assertions, as `!isset($a, $b)` already did, instead of
 no assertions, so `if (!in_array($level, $this->levels, true)) { $level = ...; }` keeps the narrowed `$level` after the
 `if`. PHPStan's `Methods/data/bug-12884.php` level fixture and `crates/pun-analyse/tests/in_array_haystack.rs` cover it.
+
+## Instanceof of `$this` in a trait is not constant
+
+`expression/binary/mod.rs` `compute_instanceof_type()`: in a method of a trait (the scope's reference origin names a
+trait, also while it is analysed in the context of a using class), `instanceof` on an expression whose type holds
+`$this`, in a union or an intersection, is `bool`, as PHPStan's InstanceofHandler gives it
+(`$isInTrait && TypeUtils::findThisType()`). Mago made `$this instanceof Publishable` constant for each using class,
+so Pun reported `instanceof.alwaysTrue`, `instanceof.alwaysFalse` and `booleanOr.alwaysTrue` where PHPStan reports
+nothing (shipfastlabs/pun#134). Narrowing by the check is unchanged. `crates/pun-analyse/tests/fixtures/coverage/trait-this-instanceof`
+covers it against PHPStan 2.3.5.
