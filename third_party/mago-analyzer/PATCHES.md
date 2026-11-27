@@ -4568,3 +4568,13 @@ on a `SoapClient` or a subclass, returns an explicit `mixed` instead of adding n
 reflects every method of such a class as public, not static, variadic and returning `mixed` (shipfastlabs/pun#141);
 a user class's `__call()` still gives no method. Pun's `rules/class_reflection.rs` `SoapClientMethods` makes the
 method exist for `method.notFound`. `crates/pun-analyse/tests/soap_client.rs` covers it against PHPStan 2.3.5.
+
+## A for loop's update expressions on the last pass
+
+`statement/loop/mod.rs` `analyze()`: when a pass leaves the loop's types unchanged, the loop stops without walking
+the update expressions again. Upstream walked them once more on the scope after the previous pass's own updates,
+where the condition no longer narrows (`$failure = $failure->getPrevious()` read `$failure` as `Throwable|null`).
+The previous pass already walked them on its body's back edge, entered through the last condition's truthy scope,
+and recorded its issues. That is PHPStan's
+[`ForHandler`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/StmtHandler/ForHandler.php)
+final walk (shipfastlabs/pun#104). `crates/pun-analyse/tests/for_update_narrowing.rs` covers it against PHPStan 2.3.5.
