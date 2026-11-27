@@ -108,10 +108,31 @@ impl Files for WithoutBaselines {
     }
 
     fn skip_unsupported_php(&self, path: &str, error: &pun_phpstan::phpfile::Error) -> bool {
-        (self.unreadable_php.borrow_mut())
-            .insert(pun_phpstan::php::normalize_path(path), error.to_string());
+        if !is_baseline(path) {
+            (self.unreadable_php.borrow_mut())
+                .insert(pun_phpstan::php::normalize_path(path), error.to_string());
+        }
         true
     }
+}
+
+/// The error of resolving phpstan.neon; a missing parameter also names the PHP configs Pun skipped, which may define it.
+fn resolve_error(
+    root: &Path,
+    files: &WithoutBaselines,
+    error: pun_phpstan::config::Error,
+) -> anyhow::Error {
+    let skipped = files.unreadable_php.borrow();
+    if !matches!(error, pun_phpstan::config::Error::MissingParameter(_)) || skipped.is_empty() {
+        return anyhow::anyhow!(error);
+    }
+    let names: Vec<String> = (skipped.iter())
+        .map(|(path, why)| format!("{} ({why})", relative(root, path)))
+        .collect();
+    anyhow::anyhow!(
+        "{error} Pun skipped {}, a PHP config it can't read.",
+        names.join(", ")
+    )
 }
 
 fn relative(root: &Path, path: &str) -> String {
@@ -148,7 +169,7 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
         virtual_file: std::cell::RefCell::default(),
         unreadable_php: std::cell::RefCell::default(),
     };
-    let resolved = resolve_with(&o, &files).map_err(|e| anyhow::anyhow!(e))?;
+    let resolved = resolve_with(&o, &files).map_err(|e| resolve_error(root, &files, e))?;
     let p = &resolved.parameters;
     let mut out = Phpstan {
         baselines: (files.seen.borrow().iter())
@@ -174,19 +195,15 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
         .chain(strings(exclude.get_str("analyse")))
         .map(|s| relative(root, &s))
         .collect();
-    let includes = includes(root, config);
+    let includes = includes(root, config, &o);
     for inc in &includes {
         if is_baseline(inc) {
             continue;
         }
-        let rel = relative(root, inc);
-        if let Some(error) = files.unreadable_php.borrow().get(inc) {
-            out.unsupported.push((
-                rel,
-                format!("a PHP config Pun can't read ({error}); its parameters are not migrated"),
-            ));
+        if files.unreadable_php.borrow().contains_key(inc) {
             continue;
         }
+        let rel = relative(root, inc);
         match package(&rel) {
             Some(pkg) if pkg == "phpstan/phpstan" => {
                 out.bleeding_edge |= inc.ends_with("/bleedingEdge.neon");
@@ -203,6 +220,12 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
             )),
         }
     }
+    for (path, error) in files.unreadable_php.borrow().iter() {
+        out.unsupported.push((
+            relative(root, path),
+            format!("a PHP config Pun can't read ({error}); its parameters are not migrated"),
+        ));
+    }
     for pkg in installer_extensions(root) {
         if BUILT_IN.iter().any(|b| b.0 == pkg) {
             out.extensions.insert(pkg);
@@ -218,14 +241,15 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
         .collect();
     let mut text = String::from("includes:\n");
     for inc in &packages {
-        writeln!(text, "    - '{inc}'").unwrap();
+        let quoted = pun_phpstan::neon::encode(&Value::str(inc.replace('%', "%%")), false, "");
+        writeln!(text, "    - {quoted}").unwrap();
     }
     writeln!(text, "parameters:\n    level: {}", out.level).unwrap();
     let path = format!("{cwd}/.pun-migrate-defaults.neon");
     *files.virtual_file.borrow_mut() = Some((path.clone(), text));
     o.config = Some(path);
     let defaults = resolve_with(&o, &files)
-        .map_err(|e| anyhow::anyhow!(e))?
+        .map_err(|e| resolve_error(root, &files, e))?
         .parameters;
     let gates = gate_parameters();
     let table = mapping::section(&["phpstan-parameters"]).table();
@@ -320,12 +344,13 @@ fn custom_identifiers(p: &Array) -> Vec<(String, String)> {
     out
 }
 
-fn includes(root: &Path, config: &Path) -> Vec<String> {
+fn includes(root: &Path, config: &Path, o: &Options) -> Vec<String> {
     let mut out = vec![];
     let mut todo = vec![config.display().to_string()];
     while let Some(file) = todo.pop() {
         let dir = Path::new(&file).parent().unwrap_or(root).to_path_buf();
         for inc in strings(neon(&file).get_str("includes")) {
+            let inc = pun_phpstan::config::expand_include(o, &inc);
             let path = if inc.starts_with("phar://") {
                 inc
             } else {
